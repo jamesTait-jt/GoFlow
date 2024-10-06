@@ -52,23 +52,22 @@ func (w *Worker) processQueue(ctx context.Context) {
 
 			return
 
-		case task := <-w.queue:
-
-			handler, ok := w.taskHandlerRegistry.GetHandler(task.Type)
+		case t := <-w.queue:
+			handler, ok := w.taskHandlerRegistry.GetHandler(t.Type)
 			if !ok {
 				logrus.WithFields(logrus.Fields{
 					"worker_id": w.id,
-					"task_type": task.Type,
+					"task_type": t.Type,
 				}).Warn("No handler registered for task type")
 
 				continue
 			}
 
-			err := handler(task.Payload)
+			err := handler(t.Payload)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"worker_id": w.id,
-					"task_id":   task.ID,
+					"task_id":   t.ID,
 					"error":     err,
 				}).Error("Failed to process task")
 			}

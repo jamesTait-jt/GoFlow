@@ -25,6 +25,7 @@ func (m *mockTaskHandlerRegistry) GetHandler(taskType string) (task.TaskHandler,
 	if args.Get(0) == nil {
 		return nil, args.Bool(1) // Return nil as the task handler
 	}
+
 	return args.Get(0).(task.TaskHandler), args.Bool(1)
 }
 
@@ -55,8 +56,9 @@ func TestWorker_Start(t *testing.T) {
 		}
 
 		var receivedPayload string
+
 		handler := task.TaskHandler(func(payload any) error {
-			receivedPayload = payload.(string)
+			receivedPayload, _ = payload.(string)
 			return nil
 		})
 
@@ -67,11 +69,13 @@ func TestWorker_Start(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		var wg sync.WaitGroup
+
 		wg.Add(1)
 
 		// Act
 		w.Start(ctx, &wg)
 		queue <- taskToProcess
+
 		cancel()
 
 		// Assert
@@ -85,6 +89,7 @@ func TestWorker_Start(t *testing.T) {
 	t.Run("Logs warning and skips task when no handler is registered", func(t *testing.T) {
 		// Arrange
 		var logOutput bytes.Buffer
+
 		logrus.SetOutput(&logOutput) // Capture log output
 		logrus.SetLevel(logrus.WarnLevel)
 
@@ -104,11 +109,13 @@ func TestWorker_Start(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		var wg sync.WaitGroup
+
 		wg.Add(1)
 
 		// Act
 		w.Start(ctx, &wg)
 		queue <- taskToProcess
+
 		cancel()
 
 		// Assert
@@ -124,6 +131,7 @@ func TestWorker_Start(t *testing.T) {
 	t.Run("Logs error when handler reports error", func(t *testing.T) {
 		// Arrange
 		var logOutput bytes.Buffer
+
 		logrus.SetOutput(&logOutput) // Capture log output
 		logrus.SetLevel(logrus.ErrorLevel)
 
@@ -137,9 +145,11 @@ func TestWorker_Start(t *testing.T) {
 		}
 
 		errorToReturn := errors.New("error")
+
 		var receivedPayload string
+
 		handler := task.TaskHandler(func(payload any) error {
-			receivedPayload = payload.(string)
+			receivedPayload, _ = payload.(string)
 			return errorToReturn
 		})
 
@@ -150,12 +160,14 @@ func TestWorker_Start(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		var wg sync.WaitGroup
+
 		wg.Add(1)
 
 		// Act
 		w.Start(ctx, &wg)
 
 		queue <- taskToProcess
+
 		cancel()
 
 		// Assert
