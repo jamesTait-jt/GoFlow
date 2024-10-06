@@ -7,5 +7,5 @@ type Task struct {
 	Payload any
 }
 
-// TaskHandler processes task payloads
-type TaskHandler func(payload any) error
+// Handler processes task payloads
+type Handler func(payload any) error

@@ -9,7 +9,7 @@ import (
 func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 	t.Run("registers the new task handler when the task type was not registered", func(t *testing.T) {
 		// Arrange
-		registry := NewTaskHandlerRegistry()
+		registry := NewHandlerRegistry()
 
 		invoked := false
 		mockHandler := func(_ any) error {
@@ -34,7 +34,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 
 	t.Run("overwrites the existing task handler for the same task type", func(t *testing.T) {
 		// Arrange
-		registry := NewTaskHandlerRegistry()
+		registry := NewHandlerRegistry()
 		taskType := "newTaskType"
 
 		invokedOriginal := false
@@ -69,7 +69,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 func TestTaskHandlerRegistry_GetHandler(t *testing.T) {
 	t.Run("retrieves nil when the task type is unregistered", func(t *testing.T) {
 		// Arrange
-		registry := NewTaskHandlerRegistry()
+		registry := NewHandlerRegistry()
 
 		// Act
 		handler, ok := registry.GetHandler("unregisteredTaskType")
@@ -81,7 +81,7 @@ func TestTaskHandlerRegistry_GetHandler(t *testing.T) {
 
 	t.Run("retrieves the correct handler when the task type is registered", func(t *testing.T) {
 		// Arrange
-		registry := NewTaskHandlerRegistry()
+		registry := NewHandlerRegistry()
 		taskType := "newTaskType"
 
 		invoked := false

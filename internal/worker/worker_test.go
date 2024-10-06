@@ -20,13 +20,13 @@ type mockTaskHandlerRegistry struct {
 	mock.Mock
 }
 
-func (m *mockTaskHandlerRegistry) GetHandler(taskType string) (task.TaskHandler, bool) {
+func (m *mockTaskHandlerRegistry) GetHandler(taskType string) (task.Handler, bool) {
 	args := m.Called(taskType)
 	if args.Get(0) == nil {
 		return nil, args.Bool(1) // Return nil as the task handler
 	}
 
-	return args.Get(0).(task.TaskHandler), args.Bool(1)
+	return args.Get(0).(task.Handler), args.Bool(1)
 }
 
 func TestNewWorker_Creates_a_new_worker_with_variables_initialised(t *testing.T) {
@@ -57,7 +57,7 @@ func TestWorker_Start(t *testing.T) {
 
 		var receivedPayload string
 
-		handler := task.TaskHandler(func(payload any) error {
+		handler := task.Handler(func(payload any) error {
 			receivedPayload, _ = payload.(string)
 			return nil
 		})
@@ -148,7 +148,7 @@ func TestWorker_Start(t *testing.T) {
 
 		var receivedPayload string
 
-		handler := task.TaskHandler(func(payload any) error {
+		handler := task.Handler(func(payload any) error {
 			receivedPayload, _ = payload.(string)
 			return errorToReturn
 		})

@@ -10,7 +10,7 @@ import (
 
 // taskHandlerRegistry defines an interface for retrieving task handlers based on task type
 type taskHandlerRegistry interface {
-	GetHandler(taskType string) (task.TaskHandler, bool)
+	GetHandler(taskType string) (task.Handler, bool)
 }
 
 // Worker processes tasks from a queue using registered task handlers
