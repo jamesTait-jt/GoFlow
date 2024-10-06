@@ -1,5 +1,6 @@
 # GoFlow - A Distributed Task Queue for Go
 
+[![Build Status](https://github.com/jamesTait-jt/GoFlow/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/jamesTait-jt/GoFlow/actions/workflows/main.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/jamesTait-jt/GoFlow)](https://goreportcard.com/report/github.com/jamesTait-jt/GoFlow)
 
 ## Getting Started
