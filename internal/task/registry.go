@@ -7,9 +7,9 @@ type TaskHandlerRegistry struct {
 
 // NewTaskHandlerRegistry creates a new TaskRegistry
 func NewTaskHandlerRegistry() *TaskHandlerRegistry {
-    return &TaskHandlerRegistry{
-        handlers: make(map[string]TaskHandler),
-    }
+	return &TaskHandlerRegistry{
+		handlers: make(map[string]TaskHandler),
+	}
 }
 
 // RegisterTaskHandler registers a handler for a given task type, overwriting any existing handlers

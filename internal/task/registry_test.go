@@ -26,7 +26,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 		addedHandler, ok := registry.handlers[taskType]
 
 		assert.True(t, ok)
-		
+
 		addedHandler(nil)
 		assert.True(t, invoked)
 	})
@@ -42,7 +42,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 			return nil
 		}
 
-		registry.handlers[taskType] = originalHandler 
+		registry.handlers[taskType] = originalHandler
 
 		invokedNew := false
 		newHandler := func(payload any) error {
@@ -57,7 +57,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 		addedHandler, ok := registry.handlers[taskType]
 
 		assert.True(t, ok)
-		
+
 		addedHandler(nil)
 		assert.True(t, invokedNew)
 		assert.False(t, invokedOriginal)
@@ -65,7 +65,7 @@ func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
 }
 
 func TestTaskHandlerRegistry_GetHandler(t *testing.T) {
-	
+
 	t.Run("retrieves nil when the task type is unregistered", func(t *testing.T) {
 		// Arrange
 		registry := NewTaskHandlerRegistry()

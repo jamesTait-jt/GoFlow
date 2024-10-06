@@ -11,11 +11,11 @@
 ### Installation
 
 To install GoFlow, run the following command:
+
 ```bash
 go get github.com/jamesTait-jt/GoFlow
 ```
 
 ### Configuration
-
 
 ### Usage
