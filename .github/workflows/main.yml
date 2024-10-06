@@ -28,7 +28,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6.1.1
 
       - name: Test
-        run: go test -v ./...
+        run: go test -v -race ./...
 
       - name: Refresh Report Card
         uses: creekorful/goreportcard-action@v1.0
