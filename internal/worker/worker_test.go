@@ -135,7 +135,7 @@ func TestWorker_Start(t *testing.T) {
 		logrus.SetOutput(&logOutput) // Capture log output
 		logrus.SetLevel(logrus.ErrorLevel)
 
-		queue := make(chan task.Task, 1)
+		queue := make(chan task.Task)
 		registry := new(mockTaskHandlerRegistry)
 
 		taskToProcess := task.Task{
