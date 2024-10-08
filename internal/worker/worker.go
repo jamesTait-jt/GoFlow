@@ -8,24 +8,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// taskHandlerRegistry defines an interface for retrieving task handlers based on task type
-type taskHandlerRegistry interface {
-	GetHandler(taskType string) (task.Handler, bool)
-}
-
 // Worker processes tasks from a queue using registered task handlers
 type Worker struct {
-	id                  int
-	queue               <-chan task.Task
-	taskHandlerRegistry taskHandlerRegistry
+	id    int
+	queue <-chan task.Task
 }
 
 // NewWorker creates and returns a new Worker instance with the given ID, task queue, and task handler registry
-func NewWorker(id int, q <-chan task.Task, taskHandlerRegistry taskHandlerRegistry) *Worker {
+func NewWorker(id int, q <-chan task.Task) *Worker {
 	return &Worker{
-		id:                  id,
-		queue:               q,
-		taskHandlerRegistry: taskHandlerRegistry,
+		id:    id,
+		queue: q,
 	}
 }
 
@@ -53,24 +46,16 @@ func (w *Worker) processQueue(ctx context.Context) {
 			return
 
 		case t := <-w.queue:
-			handler, ok := w.taskHandlerRegistry.GetHandler(t.Type)
-			if !ok {
-				logrus.WithFields(logrus.Fields{
-					"worker_id": w.id,
-					"task_type": t.Type,
-				}).Warn("No handler registered for task type")
-
-				continue
-			}
-
-			err := handler(t.Payload)
-			if err != nil {
+			result := t.Handler(t.Payload)
+			if result.Error != nil {
 				logrus.WithFields(logrus.Fields{
 					"worker_id": w.id,
 					"task_id":   t.ID,
-					"error":     err,
+					"error":     result.Error,
 				}).Error("Failed to process task")
 			}
+
+			t.ResultCh <- result
 		}
 	}
 }
