@@ -13,7 +13,7 @@ func NewHandlerRegistry() *HandlerRegistry {
 }
 
 // RegisterTaskHandler registers a handler for a given task type, overwriting any existing handlers
-func (thr *HandlerRegistry) RegisterTaskHandler(taskType string, handler Handler) {
+func (thr *HandlerRegistry) RegisterHandler(taskType string, handler Handler) {
 	thr.handlers[taskType] = handler
 }
 
