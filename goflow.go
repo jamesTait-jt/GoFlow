@@ -8,7 +8,7 @@ import (
 	"github.com/jamesTait-jt/GoFlow/internal/worker"
 )
 
-var QueueBufferSize = 100
+var queueBufferSize = 100
 
 type HandlerRegistry interface {
 	RegisterHandler(taskType string, handler task.Handler)
@@ -24,7 +24,7 @@ type GoFlow struct {
 
 func NewGoFlow(numWorkers int) *GoFlow {
 	gf := GoFlow{
-		taskQueue:    make(chan task.Task, QueueBufferSize),
+		taskQueue:    make(chan task.Task, queueBufferSize),
 		taskHandlers: task.NewHandlerRegistry(),
 	}
 
