@@ -25,19 +25,21 @@ func (m *mockTaskSource) Dequeue() <-chan task.Task {
 	return args.Get(0).(chan task.Task)
 }
 
-func TestNewWorker_Creates_a_new_worker_with_variables_initialised(t *testing.T) {
-	// Arrange
-	taskChan := make(chan task.Task)
-	defer close(taskChan)
+func TestNewWorker(t *testing.T) {
+	t.Run("Creates a new worker with variables initialised", func(t *testing.T) {
+		// Arrange
+		taskChan := make(chan task.Task)
+		defer close(taskChan)
 
-	taskSource := mockTaskSource{}
+		taskSource := mockTaskSource{}
 
-	// Act
-	w := NewWorker(1, &taskSource)
+		// Act
+		w := NewWorker(1, &taskSource)
 
-	// Assert
-	assert.Equal(t, 1, w.id)
-	assert.Equal(t, &taskSource, w.tasks)
+		// Assert
+		assert.Equal(t, 1, w.id)
+		assert.Equal(t, &taskSource, w.tasks)
+	})
 }
 
 func TestWorker_Start(t *testing.T) {
