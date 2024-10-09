@@ -30,6 +30,7 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6.1.1
+        continue-on-error: true # To make sure that SARIF upload gets called
         with: 
           args: --out-format sarif:golangci-lint.sarif
 
