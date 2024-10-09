@@ -82,9 +82,7 @@ func TestWorker_Start(t *testing.T) {
 		// Act
 		w.Start(ctx, &wg)
 		taskChan <- taskToProcess
-
 		result := <-resultCh
-
 		cancel()
 
 		// Assert
