@@ -49,6 +49,7 @@ func (w *Worker) processQueue(ctx context.Context) {
 			}
 
 			t.ResultCh <- result
+			close(t.ResultCh)
 		}
 	}
 }
