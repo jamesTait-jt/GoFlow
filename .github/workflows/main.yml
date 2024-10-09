@@ -29,8 +29,16 @@ jobs:
 
       - name: Snyk
         uses: snyk/actions/golang@master
+        continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk.sarif
+
+      - name: Upload Code Scanning Report
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: snyk.sarif
 
       - name: Test
         run: go test -v -race ./...
