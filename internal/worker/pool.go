@@ -7,13 +7,17 @@ import (
 	"github.com/jamesTait-jt/GoFlow/internal/task"
 )
 
+type taskSource interface {
+	Dequeue() <-chan task.Task
+}
+
 type Pool struct {
 	workers map[int]*Worker
 	ctx     context.Context
 	wg      *sync.WaitGroup
 }
 
-func NewWorkerPool(numWorkers int, queue <-chan task.Task, ctx context.Context) *Pool {
+func NewWorkerPool(numWorkers int, taskSource taskSource, ctx context.Context) *Pool {
 	wp := &Pool{
 		workers: make(map[int]*Worker, numWorkers),
 		ctx:     ctx,
@@ -21,7 +25,7 @@ func NewWorkerPool(numWorkers int, queue <-chan task.Task, ctx context.Context) 
 	}
 
 	for i := 0; i < numWorkers; i++ {
-		wp.workers[i] = NewWorker(i, queue)
+		wp.workers[i] = NewWorker(i, taskSource)
 	}
 
 	return wp

@@ -8,39 +8,34 @@ import (
 	"github.com/jamesTait-jt/GoFlow/internal/worker"
 )
 
-var queueBufferSize = 100
-
-type HandlerRegistry interface {
+type TaskHandlerRegistry interface {
 	RegisterHandler(taskType string, handler task.Handler)
 	GetHandler(taskType string) (task.Handler, bool)
 }
 
-type Dispatcher interface {
-	Dispatch(t task.Task)
+type Broker interface {
+	Submit(t task.Task)
+	Dequeue() <-chan task.Task
 }
 
 type GoFlow struct {
-	workers        *worker.Pool
-	taskQueue      chan task.Task
-	taskDispatcher Dispatcher
-	taskHandlers   HandlerRegistry
-	results        map[string]task.Result
-	ctx            context.Context
-	cancel         context.CancelFunc
+	workers      *worker.Pool
+	taskBroker   Broker
+	taskHandlers TaskHandlerRegistry
+	results      map[string]task.Result
+	ctx          context.Context
+	cancel       context.CancelFunc
 }
 
-func NewGoFlow(numWorkers int) *GoFlow {
+func NewGoFlow(numWorkers int, taskBroker Broker, taskHandlerRegistry TaskHandlerRegistry) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	taskQueue := make(chan task.Task, queueBufferSize)
-	taskHandlers := task.NewHandlerRegistry()
-
-	workerPool := worker.NewWorkerPool(numWorkers, taskQueue, ctx)
+	workerPool := worker.NewWorkerPool(numWorkers, taskBroker, ctx)
 
 	gf := GoFlow{
 		workers:      workerPool,
-		taskQueue:    taskQueue,
-		taskHandlers: taskHandlers,
+		taskBroker:   taskBroker,
+		taskHandlers: taskHandlerRegistry,
 		ctx:          ctx,
 		cancel:       cancel,
 	}
@@ -64,12 +59,9 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 
 	t := task.NewTask(taskType, payload, handler)
 
-	gf.taskQueue <- t
+	gf.taskBroker.Submit(t)
 
-	go func() {
-		result := <-t.ResultCh
-		gf.results[t.ID] = result
-	}()
+	go gf.persistResult(t)
 
 	return t.ID, nil
 }
@@ -85,4 +77,9 @@ func (gf *GoFlow) Stop() {
 
 	// Wait for all the workers to stop
 	gf.workers.WaitForShutdown()
+}
+
+func (gf *GoFlow) persistResult(t task.Task) {
+	result := <-t.ResultCh
+	gf.results[t.ID] = result
 }

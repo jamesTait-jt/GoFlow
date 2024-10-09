@@ -4,26 +4,21 @@ import (
 	"context"
 	"sync"
 
-	"github.com/jamesTait-jt/GoFlow/internal/task"
 	"github.com/sirupsen/logrus"
 )
 
-// Worker processes tasks from a queue using registered task handlers
 type Worker struct {
 	id    int
-	queue <-chan task.Task
+	tasks taskSource
 }
 
-// NewWorker creates and returns a new Worker instance with the given ID, task queue, and task handler registry
-func NewWorker(id int, q <-chan task.Task) *Worker {
+func NewWorker(id int, taskSource taskSource) *Worker {
 	return &Worker{
 		id:    id,
-		queue: q,
+		tasks: taskSource,
 	}
 }
 
-// Start begins the worker's task processing in a separate goroutine.
-// It takes a context to manage the worker's lifecycle and a WaitGroup to signal completion.
 func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	logrus.Infof("Worker %d starting...", w.id)
 
@@ -33,8 +28,6 @@ func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 }
 
-// processQueue continuously listens for tasks from the queue and processes them.
-// It will stop processing when the provided context is done.
 func (w *Worker) processQueue(ctx context.Context) {
 	for {
 		select {
@@ -45,7 +38,7 @@ func (w *Worker) processQueue(ctx context.Context) {
 
 			return
 
-		case t := <-w.queue:
+		case t := <-w.tasks.Dequeue():
 			result := t.Handler(t.Payload)
 			if result.Error != nil {
 				logrus.WithFields(logrus.Fields{
