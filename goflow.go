@@ -30,7 +30,7 @@ type GoFlow struct {
 func NewGoFlow(numWorkers int, taskBroker Broker, taskHandlerRegistry TaskHandlerRegistry) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	workerPool := worker.NewWorkerPool(numWorkers, taskBroker, ctx)
+	workerPool := worker.NewWorkerPool(ctx, numWorkers, taskBroker)
 
 	gf := GoFlow{
 		workers:      workerPool,

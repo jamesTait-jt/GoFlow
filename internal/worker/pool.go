@@ -17,7 +17,7 @@ type Pool struct {
 	wg      *sync.WaitGroup
 }
 
-func NewWorkerPool(numWorkers int, taskSource taskSource, ctx context.Context) *Pool {
+func NewWorkerPool(ctx context.Context, numWorkers int, taskSource taskSource) *Pool {
 	wp := &Pool{
 		workers: make(map[int]*Worker, numWorkers),
 		ctx:     ctx,
