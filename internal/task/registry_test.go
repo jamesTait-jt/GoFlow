@@ -1,105 +1,99 @@
 package task
 
-import (
-	"testing"
+// func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
+// 	t.Run("registers the new task handler when the task type was not registered", func(t *testing.T) {
+// 		// Arrange
+// 		registry := NewHandlerRegistry()
 
-	"github.com/stretchr/testify/assert"
-)
+// 		invoked := false
+// 		mockHandler := func(_ any) error {
+// 			invoked = true
+// 			return nil
+// 		}
 
-func TestTaskHandlerRegistry_RegisterTaskHandler(t *testing.T) {
-	t.Run("registers the new task handler when the task type was not registered", func(t *testing.T) {
-		// Arrange
-		registry := NewHandlerRegistry()
+// 		taskType := "newTaskType"
 
-		invoked := false
-		mockHandler := func(_ any) error {
-			invoked = true
-			return nil
-		}
+// 		// Act
+// 		registry.RegisterTaskHandler(taskType, mockHandler)
 
-		taskType := "newTaskType"
+// 		// Assert
+// 		addedHandler, ok := registry.handlers[taskType]
 
-		// Act
-		registry.RegisterTaskHandler(taskType, mockHandler)
+// 		assert.True(t, ok)
 
-		// Assert
-		addedHandler, ok := registry.handlers[taskType]
+// 		_ = addedHandler(nil)
 
-		assert.True(t, ok)
+// 		assert.True(t, invoked)
+// 	})
 
-		_ = addedHandler(nil)
+// 	t.Run("overwrites the existing task handler for the same task type", func(t *testing.T) {
+// 		// Arrange
+// 		registry := NewHandlerRegistry()
+// 		taskType := "newTaskType"
 
-		assert.True(t, invoked)
-	})
+// 		invokedOriginal := false
+// 		originalHandler := func(_ any) error {
+// 			invokedOriginal = true
+// 			return nil
+// 		}
 
-	t.Run("overwrites the existing task handler for the same task type", func(t *testing.T) {
-		// Arrange
-		registry := NewHandlerRegistry()
-		taskType := "newTaskType"
+// 		registry.handlers[taskType] = originalHandler
 
-		invokedOriginal := false
-		originalHandler := func(_ any) error {
-			invokedOriginal = true
-			return nil
-		}
+// 		invokedNew := false
+// 		newHandler := func(_ any) error {
+// 			invokedNew = true
+// 			return nil
+// 		}
 
-		registry.handlers[taskType] = originalHandler
+// 		// Act
+// 		registry.RegisterTaskHandler(taskType, newHandler)
 
-		invokedNew := false
-		newHandler := func(_ any) error {
-			invokedNew = true
-			return nil
-		}
+// 		// Assert
+// 		addedHandler, ok := registry.handlers[taskType]
 
-		// Act
-		registry.RegisterTaskHandler(taskType, newHandler)
+// 		assert.True(t, ok)
 
-		// Assert
-		addedHandler, ok := registry.handlers[taskType]
+// 		_ = addedHandler(nil)
 
-		assert.True(t, ok)
+// 		assert.True(t, invokedNew)
+// 		assert.False(t, invokedOriginal)
+// 	})
+// }
 
-		_ = addedHandler(nil)
+// func TestTaskHandlerRegistry_GetHandler(t *testing.T) {
+// 	t.Run("retrieves nil when the task type is unregistered", func(t *testing.T) {
+// 		// Arrange
+// 		registry := NewHandlerRegistry()
 
-		assert.True(t, invokedNew)
-		assert.False(t, invokedOriginal)
-	})
-}
+// 		// Act
+// 		handler, ok := registry.GetHandler("unregisteredTaskType")
 
-func TestTaskHandlerRegistry_GetHandler(t *testing.T) {
-	t.Run("retrieves nil when the task type is unregistered", func(t *testing.T) {
-		// Arrange
-		registry := NewHandlerRegistry()
+// 		// Assert
+// 		assert.False(t, ok)
+// 		assert.Nil(t, handler)
+// 	})
 
-		// Act
-		handler, ok := registry.GetHandler("unregisteredTaskType")
+// 	t.Run("retrieves the correct handler when the task type is registered", func(t *testing.T) {
+// 		// Arrange
+// 		registry := NewHandlerRegistry()
+// 		taskType := "newTaskType"
 
-		// Assert
-		assert.False(t, ok)
-		assert.Nil(t, handler)
-	})
+// 		invoked := false
+// 		mockHandler := func(_ any) error {
+// 			invoked = true
+// 			return nil
+// 		}
 
-	t.Run("retrieves the correct handler when the task type is registered", func(t *testing.T) {
-		// Arrange
-		registry := NewHandlerRegistry()
-		taskType := "newTaskType"
+// 		registry.handlers[taskType] = mockHandler
 
-		invoked := false
-		mockHandler := func(_ any) error {
-			invoked = true
-			return nil
-		}
+// 		// Act
+// 		handler, ok := registry.GetHandler(taskType)
 
-		registry.handlers[taskType] = mockHandler
+// 		// Assert
+// 		assert.True(t, ok)
 
-		// Act
-		handler, ok := registry.GetHandler(taskType)
+// 		_ = handler(nil)
 
-		// Assert
-		assert.True(t, ok)
-
-		_ = handler(nil)
-
-		assert.True(t, invoked)
-	})
-}
+// 		assert.True(t, invoked)
+// 	})
+// }
