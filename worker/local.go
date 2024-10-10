@@ -7,28 +7,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Worker struct {
-	id    int
-	tasks taskSource
+type LocalWorker struct {
+	id int
 }
 
-func NewWorker(id int, taskSource taskSource) *Worker {
-	return &Worker{
-		id:    id,
-		tasks: taskSource,
+func NewWorker(id int) *LocalWorker {
+	return &LocalWorker{
+		id: id,
 	}
 }
 
-func (w *Worker) Start(ctx context.Context, wg *sync.WaitGroup) {
+func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource TaskSource) {
 	logrus.Infof("Worker %d starting...", w.id)
 
 	go func() {
 		defer wg.Done()
-		w.processQueue(ctx)
+		w.processQueue(ctx, taskSource)
 	}()
 }
 
-func (w *Worker) processQueue(ctx context.Context) {
+func (w *LocalWorker) processQueue(ctx context.Context, taskSource TaskSource) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -38,7 +36,7 @@ func (w *Worker) processQueue(ctx context.Context) {
 
 			return
 
-		case t := <-w.tasks.Dequeue():
+		case t := <-taskSource.Dequeue():
 			result := t.Handler(t.Payload)
 			if result.Error != nil {
 				logrus.WithFields(logrus.Fields{

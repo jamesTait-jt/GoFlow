@@ -17,7 +17,6 @@ import (
 
 type mockTaskSource struct {
 	mock.Mock
-	// taskChan chan task.Task
 }
 
 func (m *mockTaskSource) Dequeue() <-chan task.Task {
@@ -28,17 +27,11 @@ func (m *mockTaskSource) Dequeue() <-chan task.Task {
 func TestNewWorker(t *testing.T) {
 	t.Run("Creates a new worker with variables initialised", func(t *testing.T) {
 		// Arrange
-		taskChan := make(chan task.Task)
-		defer close(taskChan)
-
-		taskSource := mockTaskSource{}
-
 		// Act
-		w := NewWorker(1, &taskSource)
+		w := NewWorker(1)
 
 		// Assert
 		assert.Equal(t, 1, w.id)
-		assert.Equal(t, &taskSource, w.tasks)
 	})
 }
 
@@ -71,7 +64,7 @@ func TestWorker_Start(t *testing.T) {
 			ResultCh: resultCh,
 		}
 
-		w := NewWorker(1, &taskSource)
+		w := NewWorker(1)
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -80,7 +73,7 @@ func TestWorker_Start(t *testing.T) {
 		wg.Add(1)
 
 		// Act
-		w.Start(ctx, &wg)
+		w.Start(ctx, &wg, &taskSource)
 		taskChan <- taskToProcess
 
 		result := <-resultCh
@@ -129,7 +122,7 @@ func TestWorker_Start(t *testing.T) {
 			ResultCh: resultCh,
 		}
 
-		w := NewWorker(1, &taskSource)
+		w := NewWorker(1)
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -138,7 +131,7 @@ func TestWorker_Start(t *testing.T) {
 		wg.Add(1)
 
 		// Act
-		w.Start(ctx, &wg)
+		w.Start(ctx, &wg, &taskSource)
 		taskChan <- taskToProcess
 
 		result := <-resultCh

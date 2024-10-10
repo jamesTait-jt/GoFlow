@@ -1,10 +1,12 @@
-package worker
+package workerpool
 
 import (
 	"context"
 	"sync"
 	"testing"
 
+	"github.com/jamesTait-jt/GoFlow/internal/task"
+	"github.com/jamesTait-jt/GoFlow/worker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -13,23 +15,37 @@ type mockWorker struct {
 	mock.Mock
 }
 
-func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup) {
-	m.Called(ctx, wg)
+func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource worker.TaskSource) {
+	m.Called(ctx, wg, taskSource)
+}
+
+type mockTaskSource struct {
+	mock.Mock
+}
+
+func (m *mockTaskSource) Dequeue() <-chan task.Task {
+	args := m.Called()
+	return args.Get(0).(<-chan task.Task)
 }
 
 func TestNewWorkerPool(t *testing.T) {
 	t.Run("Creates a new worker pool with variables initialised", func(t *testing.T) {
 		// Arrange
-		ctx := context.Background()
 		numWorkers := 5
 
+		ids := []int{}
+		workerFactory := func(id int) worker.Worker {
+			ids = append(ids, id)
+			return &mockWorker{}
+		}
+
 		// Act
-		wp := NewWorkerPool(ctx, numWorkers, nil)
+		wp := NewWorkerPool(numWorkers, workerFactory)
 
 		// Assert
 		assert.Equal(t, numWorkers, len(wp.workers))
-		assert.Equal(t, ctx, wp.ctx)
 		assert.NotNil(t, wp.wg)
+		assert.Equal(t, []int{0, 1, 2, 3, 4}, ids)
 	})
 }
 
@@ -39,18 +55,18 @@ func TestPool_Start(t *testing.T) {
 		numWorkers := 5
 		ctx := context.Background()
 		wg := &sync.WaitGroup{}
+		taskSource := &mockTaskSource{}
 
 		mockWorkers := make(map[int]*mockWorker)
 
 		for i := 0; i < numWorkers; i++ {
 			mockWorker := new(mockWorker)
-			mockWorker.On("Start", ctx, wg).Once()
+			mockWorker.On("Start", ctx, wg, taskSource).Once()
 			mockWorkers[i] = mockWorker
 		}
 
 		pool := &Pool{
-			workers: make(map[int]worker),
-			ctx:     ctx,
+			workers: make(map[int]worker.Worker),
 			wg:      wg,
 		}
 
@@ -59,11 +75,11 @@ func TestPool_Start(t *testing.T) {
 		}
 
 		// Act
-		pool.Start()
+		pool.Start(ctx, taskSource)
 
 		// Assert
 		for i := 0; i < numWorkers; i++ {
-			mockWorkers[i].AssertCalled(t, "Start", ctx, wg)
+			mockWorkers[i].AssertCalled(t, "Start", ctx, wg, taskSource)
 		}
 	})
 }

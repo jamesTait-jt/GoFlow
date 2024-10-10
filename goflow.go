@@ -5,36 +5,42 @@ import (
 	"fmt"
 
 	"github.com/jamesTait-jt/GoFlow/internal/task"
-	"github.com/jamesTait-jt/GoFlow/internal/worker"
+	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
+	"github.com/jamesTait-jt/GoFlow/worker"
 )
-
-type TaskHandlerRegistry interface {
-	RegisterHandler(taskType string, handler task.Handler)
-	GetHandler(taskType string) (task.Handler, bool)
-}
 
 type Broker interface {
 	Submit(t task.Task)
 	Dequeue() <-chan task.Task
 }
 
+type TaskHandlerRegistry interface {
+	RegisterHandler(taskType string, handler task.Handler)
+	GetHandler(taskType string) (task.Handler, bool)
+}
+
 type GoFlow struct {
-	workers      *worker.Pool
 	taskBroker   Broker
+	workers      *workerpool.Pool
 	taskHandlers TaskHandlerRegistry
 	results      map[string]task.Result
 	ctx          context.Context
 	cancel       context.CancelFunc
 }
 
-func NewGoFlow(numWorkers int, taskBroker Broker, taskHandlerRegistry TaskHandlerRegistry) *GoFlow {
+func NewGoFlow(
+	numWorkers int,
+	workerFactory func(id int) worker.Worker,
+	taskBroker Broker,
+	taskHandlerRegistry TaskHandlerRegistry,
+) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	workerPool := worker.NewWorkerPool(ctx, numWorkers, taskBroker)
+	workerPool := workerpool.NewWorkerPool(numWorkers, workerFactory)
 
 	gf := GoFlow{
-		workers:      workerPool,
 		taskBroker:   taskBroker,
+		workers:      workerPool,
 		taskHandlers: taskHandlerRegistry,
 		ctx:          ctx,
 		cancel:       cancel,
@@ -44,7 +50,7 @@ func NewGoFlow(numWorkers int, taskBroker Broker, taskHandlerRegistry TaskHandle
 }
 
 func (gf *GoFlow) Start() {
-	gf.workers.Start()
+	gf.workers.Start(gf.ctx, gf.taskBroker)
 }
 
 func (gf *GoFlow) RegisterHandler(taskType string, handler task.Handler) {
@@ -60,7 +66,6 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 	t := task.NewTask(taskType, payload, handler)
 
 	gf.taskBroker.Submit(t)
-
 	go gf.persistResult(t)
 
 	return t.ID, nil
@@ -76,7 +81,7 @@ func (gf *GoFlow) Stop() {
 	gf.cancel()
 
 	// Wait for all the workers to stop
-	gf.workers.WaitForShutdown()
+	gf.workers.AwaitShutdown()
 }
 
 func (gf *GoFlow) persistResult(t task.Task) {
