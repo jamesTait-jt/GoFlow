@@ -30,27 +30,27 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6.1.1
-        continue-on-error: true # To make sure that SARIF upload gets called
-        with: 
-          args: --out-format sarif:golangci-lint.sarif
+        # continue-on-error: true # To make sure that SARIF upload gets called
+        # with: 
+        #   args: --out-format sarif:golangci-lint.sarif,colored-line-number:stdout
 
       - name: Snyk
         uses: snyk/actions/golang@master
         continue-on-error: true # To make sure that SARIF upload gets called
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --sarif-file-output=snyk.sarif
+        # with:
+        #   args: --sarif-file-output=snyk.sarif
 
-      - name: Upload Lint Report
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: golangci-lint.sarif
+      # - name: Upload Lint Report
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: golangci-lint.sarif
       
-      - name: Upload Snyk Report
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: snyk.sarif
+      # - name: Upload Snyk Report
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: snyk.sarif
 
       - name: Test
         run: go test -v -race ./...
