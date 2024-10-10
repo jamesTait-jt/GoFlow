@@ -11,15 +11,19 @@ type taskSource interface {
 	Dequeue() <-chan task.Task
 }
 
+type worker interface {
+	Start(ctx context.Context, wg *sync.WaitGroup)
+}
+
 type Pool struct {
-	workers map[int]*Worker
+	workers map[int]worker
 	ctx     context.Context
 	wg      *sync.WaitGroup
 }
 
 func NewWorkerPool(ctx context.Context, numWorkers int, taskSource taskSource) *Pool {
 	wp := &Pool{
-		workers: make(map[int]*Worker, numWorkers),
+		workers: make(map[int]worker, numWorkers),
 		ctx:     ctx,
 		wg:      &sync.WaitGroup{},
 	}
