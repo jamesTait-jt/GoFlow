@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/jamesTait-jt/GoFlow/broker"
-	"github.com/jamesTait-jt/GoFlow/internal/task"
 	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
 	"github.com/jamesTait-jt/GoFlow/pkg/store"
+	"github.com/jamesTait-jt/GoFlow/task"
 	"github.com/jamesTait-jt/GoFlow/worker"
 )
 

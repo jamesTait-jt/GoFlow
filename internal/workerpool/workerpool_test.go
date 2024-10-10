@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jamesTait-jt/GoFlow/internal/task"
+	"github.com/jamesTait-jt/GoFlow/task"
 	"github.com/jamesTait-jt/GoFlow/worker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
