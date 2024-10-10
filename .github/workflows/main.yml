@@ -23,6 +23,10 @@ jobs:
         uses: golangci/golangci-lint-action@v6.1.1
         with: 
           args: --out-format sarif:golangci-lint.sarif,colored-line-number:stdout
+      - uses: actions/upload-artifact@master
+        with:
+          name: lint-report
+          path: golangci-lint.sarif
 
   snyk: 
     runs-on: ubuntu-latest
@@ -35,17 +39,28 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --sarif-file-output=snyk.sarif
+      - uses: actions/upload-artifact@master
+        with:
+          name: snyk-report
+          path: snyk.sarif
 
   sarif:
     if: always()
     needs: [lint, snyk]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/download-artifact@master
+        with:
+          name: lint-report
+          path: golangci-lint.sarif
+      - uses: actions/download-artifact@master
+        with:
+          name: snyk-report
+          path: snyk.sarif
       - name: Upload Lint Report
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: golangci-lint.sarif
-      
       - name: Upload Snyk Report
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -67,6 +82,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go_version }}
       - name: Test
         run: go test -v -race ./...
 
