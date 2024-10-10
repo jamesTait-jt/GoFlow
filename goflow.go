@@ -6,6 +6,7 @@ import (
 
 	"github.com/jamesTait-jt/GoFlow/internal/task"
 	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
+	"github.com/jamesTait-jt/GoFlow/pkg/store"
 	"github.com/jamesTait-jt/GoFlow/worker"
 )
 
@@ -14,36 +15,33 @@ type Broker interface {
 	Dequeue() <-chan task.Task
 }
 
-type TaskHandlerRegistry interface {
-	RegisterHandler(taskType string, handler task.Handler)
-	GetHandler(taskType string) (task.Handler, bool)
-}
-
 type GoFlow struct {
-	taskBroker   Broker
-	workers      *workerpool.Pool
-	taskHandlers TaskHandlerRegistry
-	results      map[string]task.Result
 	ctx          context.Context
 	cancel       context.CancelFunc
+	taskBroker   Broker
+	workers      *workerpool.Pool
+	taskHandlers store.KVStore[string, task.Handler]
+	results      store.KVStore[string, task.Result]
 }
 
 func NewGoFlow(
 	numWorkers int,
 	workerFactory func(id int) worker.Worker,
+	taskHandlers store.KVStore[string, task.Handler],
+	results store.KVStore[string, task.Result],
 	taskBroker Broker,
-	taskHandlerRegistry TaskHandlerRegistry,
 ) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	workerPool := workerpool.NewWorkerPool(numWorkers, workerFactory)
 
 	gf := GoFlow{
-		taskBroker:   taskBroker,
-		workers:      workerPool,
-		taskHandlers: taskHandlerRegistry,
 		ctx:          ctx,
 		cancel:       cancel,
+		taskBroker:   taskBroker,
+		workers:      workerPool,
+		taskHandlers: taskHandlers,
+		results:      results,
 	}
 
 	return &gf
@@ -54,11 +52,11 @@ func (gf *GoFlow) Start() {
 }
 
 func (gf *GoFlow) RegisterHandler(taskType string, handler task.Handler) {
-	gf.taskHandlers.RegisterHandler(taskType, handler)
+	gf.taskHandlers.Put(taskType, handler)
 }
 
 func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
-	handler, ok := gf.taskHandlers.GetHandler(taskType)
+	handler, ok := gf.taskHandlers.Get(taskType)
 	if !ok {
 		return "", fmt.Errorf("no handler defined for taskType: %s", taskType)
 	}
@@ -72,7 +70,7 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 }
 
 func (gf *GoFlow) GetResult(taskID string) (task.Result, bool) {
-	result, ok := gf.results[taskID]
+	result, ok := gf.results.Get(taskID)
 	return result, ok
 }
 
@@ -86,5 +84,5 @@ func (gf *GoFlow) Stop() {
 
 func (gf *GoFlow) persistResult(t task.Task) {
 	result := <-t.ResultCh
-	gf.results[t.ID] = result
+	gf.results.Put(t.ID, result)
 }
