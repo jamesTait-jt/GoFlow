@@ -153,7 +153,7 @@ func Test_GoFlow_Push(t *testing.T) {
 		var submittedTask task.Task
 
 		mockBroker.On("Submit", mock.Anything).Once().Run(func(args mock.Arguments) {
-			submittedTask = args.Get(0).(task.Task)
+			submittedTask, _ = args.Get(0).(task.Task)
 
 			// Put something on the created resultChannel to simulate a response form the worker
 			submittedTask.ResultCh <- responseFromWorker
@@ -163,7 +163,7 @@ func Test_GoFlow_Push(t *testing.T) {
 
 		wg.Add(1)
 
-		mockResults.On("Put", mock.Anything, mock.Anything).Once().Run(func(args mock.Arguments) {
+		mockResults.On("Put", mock.Anything, mock.Anything).Once().Run(func(_ mock.Arguments) {
 			// Signal that the result was persisted, allowing the test to continue
 			wg.Done()
 		})
