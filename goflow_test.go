@@ -127,4 +127,61 @@ func Test_GoFlow_Push(t *testing.T) {
 		assert.Equal(t, "", taskID)
 		assert.EqualError(t, err, fmt.Sprintf("no handler defined for taskType: %s", taskType))
 	})
+
+	t.Run("Submits the task to the broker and handles the result", func(t *testing.T) {
+		// Arrange
+		mockHandlers := new(mockKVStore[string, task.Handler])
+		mockBroker := new(mockTaskBroker)
+		mockResults := new(mockKVStore[string, task.Result])
+
+		gf := GoFlow{
+			taskHandlers: mockHandlers,
+			taskBroker:   mockBroker,
+			results:      mockResults,
+		}
+
+		var mockHandler task.Handler = func(_ any) task.Result {
+			return task.Result{}
+		}
+
+		taskType := "exampleTask"
+		payload := "examplePayload"
+		responseFromWorker := task.Result{Payload: "Successful work!!"}
+
+		mockHandlers.On("Get", mock.Anything).Once().Return(mockHandler, true)
+
+		var submittedTask task.Task
+
+		mockBroker.On("Submit", mock.Anything).Once().Run(func(args mock.Arguments) {
+			submittedTask = args.Get(0).(task.Task)
+
+			// Put something on the created resultChannel to simulate a response form the worker
+			submittedTask.ResultCh <- responseFromWorker
+		})
+
+		var wg sync.WaitGroup
+
+		wg.Add(1)
+
+		mockResults.On("Put", mock.Anything, mock.Anything).Once().Run(func(args mock.Arguments) {
+			// Signal that the result was persisted, allowing the test to continue
+			wg.Done()
+		})
+
+		// Act
+		taskID, err := gf.Push(taskType, payload)
+
+		wg.Wait()
+
+		// Assert
+		assert.Nil(t, err)
+		assert.Equal(t, submittedTask.ID, taskID)
+
+		assert.Equal(t, taskType, submittedTask.Type)
+		assert.Equal(t, payload, submittedTask.Payload)
+
+		mockHandlers.AssertCalled(t, "Get", taskType)
+		mockResults.AssertCalled(t, "Put", submittedTask.ID, responseFromWorker)
+		mockBroker.AssertCalled(t, "Submit", mock.AnythingOfType("task.Task"))
+	})
 }
