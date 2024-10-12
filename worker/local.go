@@ -40,7 +40,13 @@ func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.Ta
 			return
 
 		case t := <-taskSource.Dequeue():
+			logrus.WithFields(logrus.Fields{
+				"worker_id": w.id,
+				"task_id":   t.ID,
+			}).Info("Picked up task")
+
 			result := t.Handler(t.Payload)
+
 			if result.Error != nil {
 				logrus.WithFields(logrus.Fields{
 					"worker_id": w.id,
