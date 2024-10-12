@@ -22,7 +22,7 @@ func main() {
 	resultsStore := store.NewInMemoryKVStore[string, task.Result]()
 	channelBroker := broker.NewChannelBroker(5)
 
-	gf := goflow.Newgoflow(workers, taskHandlerStore, resultsStore, channelBroker)
+	gf := goflow.New(workers, taskHandlerStore, resultsStore, channelBroker)
 
 	// Example task handler
 	taskHandler := func(payload any) task.Result {

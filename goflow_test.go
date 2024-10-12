@@ -58,7 +58,7 @@ func Test_Newgoflow(t *testing.T) {
 		mockResults := new(mockKVStore[string, task.Result])
 
 		// Act
-		gf := Newgoflow([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
+		gf := New([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
 
 		// Assert
 		assert.NotNil(t, gf)

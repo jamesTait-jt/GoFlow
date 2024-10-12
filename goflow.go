@@ -33,7 +33,7 @@ type Goflow struct {
 	results      KVStore[string, task.Result]
 }
 
-func Newgoflow(
+func New(
 	workers []publicWorkerpool.Worker,
 	taskHandlerStore KVStore[string, task.Handler],
 	resultsStore KVStore[string, task.Result],
