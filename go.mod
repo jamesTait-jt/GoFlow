@@ -1,4 +1,4 @@
-module github.com/jamesTait-jt/GoFlow
+module github.com/jamesTait-jt/goflow
 
 go 1.20
 

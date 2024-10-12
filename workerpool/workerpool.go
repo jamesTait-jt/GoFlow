@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/jamesTait-jt/GoFlow/task"
+	"github.com/jamesTait-jt/goflow/task"
 )
 
 type TaskSource interface {
