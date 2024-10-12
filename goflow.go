@@ -24,7 +24,7 @@ type KVStore[K comparable, V any] interface {
 	Get(k K) (V, bool)
 }
 
-type goflow struct {
+type Goflow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	taskBroker   Broker
@@ -38,12 +38,12 @@ func Newgoflow(
 	taskHandlerStore KVStore[string, task.Handler],
 	resultsStore KVStore[string, task.Result],
 	taskBroker Broker,
-) *goflow {
+) *Goflow {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	workerPool := workerpool.NewWorkerPool(workers)
 
-	gf := goflow{
+	gf := Goflow{
 		ctx:          ctx,
 		cancel:       cancel,
 		taskBroker:   taskBroker,
@@ -55,15 +55,15 @@ func Newgoflow(
 	return &gf
 }
 
-func (gf *goflow) Start() {
+func (gf *Goflow) Start() {
 	gf.workers.Start(gf.ctx, gf.taskBroker)
 }
 
-func (gf *goflow) RegisterHandler(taskType string, handler task.Handler) {
+func (gf *Goflow) RegisterHandler(taskType string, handler task.Handler) {
 	gf.taskHandlers.Put(taskType, handler)
 }
 
-func (gf *goflow) Push(taskType string, payload any) (string, error) {
+func (gf *Goflow) Push(taskType string, payload any) (string, error) {
 	handler, ok := gf.taskHandlers.Get(taskType)
 	if !ok {
 		return "", fmt.Errorf("no handler defined for taskType: %s", taskType)
@@ -77,12 +77,12 @@ func (gf *goflow) Push(taskType string, payload any) (string, error) {
 	return t.ID, nil
 }
 
-func (gf *goflow) GetResult(taskID string) (task.Result, bool) {
+func (gf *Goflow) GetResult(taskID string) (task.Result, bool) {
 	result, ok := gf.results.Get(taskID)
 	return result, ok
 }
 
-func (gf *goflow) Stop() {
+func (gf *Goflow) Stop() {
 	// Cancel the context, signalling to all the workers that they must stop
 	gf.cancel()
 
@@ -90,7 +90,7 @@ func (gf *goflow) Stop() {
 	gf.workers.AwaitShutdown()
 }
 
-func (gf *goflow) persistResult(t task.Task) {
+func (gf *Goflow) persistResult(t task.Task) {
 	result := <-t.ResultCh
 	gf.results.Put(t.ID, result)
 }
