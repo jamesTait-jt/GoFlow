@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/jamesTait-jt/GoFlow/workerpool"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +18,7 @@ func NewWorker(id int) *LocalWorker {
 	}
 }
 
-func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource TaskSource) {
+func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
 	logrus.Infof("Worker %d starting...", w.id)
 
 	go func() {
@@ -26,7 +27,7 @@ func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource 
 	}()
 }
 
-func (w *LocalWorker) processQueue(ctx context.Context, taskSource TaskSource) {
+func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.TaskSource) {
 	for {
 		select {
 		case <-ctx.Done():

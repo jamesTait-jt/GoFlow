@@ -8,11 +8,11 @@ import (
 	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
 	"github.com/jamesTait-jt/GoFlow/pkg/store"
 	"github.com/jamesTait-jt/GoFlow/task"
-	"github.com/jamesTait-jt/GoFlow/worker"
+	publicWorkerpool "github.com/jamesTait-jt/GoFlow/workerpool"
 )
 
 type workerPool interface {
-	Start(ctx context.Context, taskSource worker.TaskSource)
+	Start(ctx context.Context, taskSource publicWorkerpool.TaskSource)
 	AwaitShutdown()
 }
 
@@ -27,7 +27,7 @@ type GoFlow struct {
 
 func NewGoFlow(
 	numWorkers int,
-	workerFactory func(id int) worker.Worker,
+	workerFactory func(id int) publicWorkerpool.Worker,
 	taskHandlers store.KVStore[string, task.Handler],
 	results store.KVStore[string, task.Result],
 	taskBroker broker.Broker,

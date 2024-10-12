@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/jamesTait-jt/GoFlow/task"
-	"github.com/jamesTait-jt/GoFlow/worker"
+	"github.com/jamesTait-jt/GoFlow/workerpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,7 +15,7 @@ type mockWorker struct {
 	mock.Mock
 }
 
-func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource worker.TaskSource) {
+func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
 	m.Called(ctx, wg, taskSource)
 }
 
@@ -34,7 +34,7 @@ func TestNewWorkerPool(t *testing.T) {
 		numWorkers := 5
 
 		ids := []int{}
-		workerFactory := func(id int) worker.Worker {
+		workerFactory := func(id int) workerpool.Worker {
 			ids = append(ids, id)
 			return &mockWorker{}
 		}
@@ -66,7 +66,7 @@ func TestPool_Start(t *testing.T) {
 		}
 
 		pool := &Pool{
-			workers: make(map[int]worker.Worker),
+			workers: make(map[int]workerpool.Worker),
 			wg:      wg,
 		}
 

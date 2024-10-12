@@ -4,17 +4,17 @@ import (
 	"context"
 	"sync"
 
-	"github.com/jamesTait-jt/GoFlow/worker"
+	"github.com/jamesTait-jt/GoFlow/workerpool"
 )
 
 type Pool struct {
-	workers map[int]worker.Worker
+	workers map[int]workerpool.Worker
 	wg      *sync.WaitGroup
 }
 
-func NewWorkerPool(numWorkers int, workerFactory func(id int) worker.Worker) *Pool {
+func NewWorkerPool(numWorkers int, workerFactory func(id int) workerpool.Worker) *Pool {
 	wp := &Pool{
-		workers: make(map[int]worker.Worker, numWorkers),
+		workers: make(map[int]workerpool.Worker, numWorkers),
 		wg:      &sync.WaitGroup{},
 	}
 
@@ -25,7 +25,7 @@ func NewWorkerPool(numWorkers int, workerFactory func(id int) worker.Worker) *Po
 	return wp
 }
 
-func (wp *Pool) Start(ctx context.Context, taskSource worker.TaskSource) {
+func (wp *Pool) Start(ctx context.Context, taskSource workerpool.TaskSource) {
 	for _, worker := range wp.workers {
 		wp.wg.Add(1)
 		worker.Start(ctx, wp.wg, taskSource)
