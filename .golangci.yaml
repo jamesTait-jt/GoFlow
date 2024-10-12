@@ -59,6 +59,6 @@ issues:
       linters:
         - goconst
 exclude:
-  - "examples/**"
+  - "example/**"
 run:
   issues-exit-code: 1
