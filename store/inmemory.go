@@ -7,6 +7,12 @@ type InMemoryKVStore[K comparable, V any] struct {
 	mu   sync.Mutex
 }
 
+func NewInMemoryKVStore[K comparable, V any]() *InMemoryKVStore[K, V] {
+	return &InMemoryKVStore[K, V]{
+		data: make(map[K]V),
+	}
+}
+
 func (kv *InMemoryKVStore[K, V]) Put(k K, v V) {
 	kv.mu.Unlock()
 	defer kv.mu.Lock()
