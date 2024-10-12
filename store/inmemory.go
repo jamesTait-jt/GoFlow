@@ -14,15 +14,15 @@ func NewInMemoryKVStore[K comparable, V any]() *InMemoryKVStore[K, V] {
 }
 
 func (kv *InMemoryKVStore[K, V]) Put(k K, v V) {
-	kv.mu.Unlock()
-	defer kv.mu.Lock()
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
 
 	kv.data[k] = v
 }
 
 func (kv *InMemoryKVStore[K, V]) Get(k K) (V, bool) {
-	kv.mu.Unlock()
-	defer kv.mu.Lock()
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
 
 	v, ok := kv.data[k]
 
