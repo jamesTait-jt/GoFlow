@@ -12,6 +12,18 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+type mockWorkerPool struct {
+	mock.Mock
+}
+
+func (m *mockWorkerPool) Start(ctx context.Context, taskSource worker.TaskSource) {
+	m.Called(ctx, taskSource)
+}
+
+func (m *mockWorkerPool) AwaitShutdown() {
+	m.Called()
+}
+
 type mockWorker struct {
 	mock.Mock
 }
@@ -186,7 +198,7 @@ func Test_GoFlow_Push(t *testing.T) {
 	})
 }
 
-func Test_GoFlow(t *testing.T) {
+func Test_GoFlow_GetResult(t *testing.T) {
 	t.Run("Returns the result of given taskID if it exists", func(t *testing.T) {
 		// Arrange
 		mockResults := new(mockKVStore[string, task.Result])
@@ -228,5 +240,30 @@ func Test_GoFlow(t *testing.T) {
 		// Assert
 		assert.Equal(t, expectedResult, result)
 		assert.False(t, ok)
+	})
+}
+
+func Test_GoFlow_Stop(t *testing.T) {
+	t.Run("Calls cancel and waits for all workers to shut down", func(t *testing.T) {
+		// Arrange
+		wasCancelCalled := false
+		mockCancel := func() {
+			wasCancelCalled = true
+		}
+
+		mockWorkerPool := &mockWorkerPool{}
+		mockWorkerPool.On("AwaitShutdown").Once()
+
+		gf := GoFlow{
+			cancel:  mockCancel,
+			workers: mockWorkerPool,
+		}
+
+		// Act
+		gf.Stop()
+
+		// Assert
+		assert.True(t, wasCancelCalled)
+		mockWorkerPool.AssertExpectations(t)
 	})
 }

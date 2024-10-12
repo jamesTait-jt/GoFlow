@@ -11,11 +11,16 @@ import (
 	"github.com/jamesTait-jt/GoFlow/worker"
 )
 
+type workerPool interface {
+	Start(ctx context.Context, taskSource worker.TaskSource)
+	AwaitShutdown()
+}
+
 type GoFlow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	taskBroker   broker.Broker
-	workers      *workerpool.Pool
+	workers      workerPool
 	taskHandlers store.KVStore[string, task.Handler]
 	results      store.KVStore[string, task.Result]
 }
