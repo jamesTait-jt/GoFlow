@@ -24,18 +24,6 @@ func (m *mockWorkerPool) AwaitShutdown() {
 	m.Called()
 }
 
-type mockWorker struct {
-	mock.Mock
-}
-
-func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
-	m.Called(ctx, wg, taskSource)
-}
-
-func (m *mockWorker) SetID(id string) {
-	m.Called(id)
-}
-
 type mockTaskBroker struct {
 	mock.Mock
 }
