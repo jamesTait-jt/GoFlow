@@ -34,23 +34,22 @@ type GoFlow struct {
 }
 
 func NewGoFlow(
-	numWorkers int,
-	workerFactory func(id int) publicWorkerpool.Worker,
-	taskHandlers KVStore[string, task.Handler],
-	results KVStore[string, task.Result],
+	workers []publicWorkerpool.Worker,
+	taskHandlerStore KVStore[string, task.Handler],
+	resultsStore KVStore[string, task.Result],
 	taskBroker Broker,
 ) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	workerPool := workerpool.NewWorkerPool(numWorkers, workerFactory)
+	workerPool := workerpool.NewWorkerPool(workers)
 
 	gf := GoFlow{
 		ctx:          ctx,
 		cancel:       cancel,
 		taskBroker:   taskBroker,
 		workers:      workerPool,
-		taskHandlers: taskHandlers,
-		results:      results,
+		taskHandlers: taskHandlerStore,
+		results:      resultsStore,
 	}
 
 	return &gf

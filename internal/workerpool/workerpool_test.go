@@ -2,6 +2,7 @@ package workerpool
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -19,6 +20,10 @@ func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource w
 	m.Called(ctx, wg, taskSource)
 }
 
+func (m *mockWorker) SetID(id string) {
+	m.Called(id)
+}
+
 type mockTaskSource struct {
 	mock.Mock
 }
@@ -32,20 +37,21 @@ func TestNewWorkerPool(t *testing.T) {
 	t.Run("Creates a new worker pool with variables initialised", func(t *testing.T) {
 		// Arrange
 		numWorkers := 5
+		workers := make([]workerpool.Worker, numWorkers)
 
-		ids := []int{}
-		workerFactory := func(id int) workerpool.Worker {
-			ids = append(ids, id)
-			return &mockWorker{}
+		for i := 0; i < numWorkers; i++ {
+			worker := &mockWorker{}
+			worker.On("SetID", mock.AnythingOfType("string")).Once()
+
+			workers[i] = worker
 		}
 
 		// Act
-		wp := NewWorkerPool(numWorkers, workerFactory)
+		wp := NewWorkerPool(workers)
 
 		// Assert
 		assert.Equal(t, numWorkers, len(wp.workers))
 		assert.NotNil(t, wp.wg)
-		assert.Equal(t, []int{0, 1, 2, 3, 4}, ids)
 	})
 }
 
@@ -66,12 +72,12 @@ func TestPool_Start(t *testing.T) {
 		}
 
 		pool := &Pool{
-			workers: make(map[int]workerpool.Worker),
+			workers: make(map[string]workerpool.Worker),
 			wg:      wg,
 		}
 
 		for i := 0; i < numWorkers; i++ {
-			pool.workers[i] = mockWorkers[i]
+			pool.workers[fmt.Sprintf("%d", i)] = mockWorkers[i]
 		}
 
 		// Act

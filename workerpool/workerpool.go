@@ -12,5 +12,6 @@ type TaskSource interface {
 }
 
 type Worker interface {
+	SetID(id string)
 	Start(ctx context.Context, wg *sync.WaitGroup, taskSource TaskSource)
 }

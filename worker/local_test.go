@@ -24,17 +24,6 @@ func (m *mockTaskSource) Dequeue() <-chan task.Task {
 	return args.Get(0).(chan task.Task)
 }
 
-func TestNewWorker(t *testing.T) {
-	t.Run("Creates a new worker with variables initialised", func(t *testing.T) {
-		// Arrange
-		// Act
-		w := NewWorker(1)
-
-		// Assert
-		assert.Equal(t, 1, w.id)
-	})
-}
-
 func TestWorker_Start(t *testing.T) {
 	t.Run("Processes a task successfully", func(t *testing.T) {
 		// Arrange
@@ -64,7 +53,9 @@ func TestWorker_Start(t *testing.T) {
 			ResultCh: resultCh,
 		}
 
-		w := NewWorker(1)
+		w := LocalWorker{
+			id: "1",
+		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -122,7 +113,9 @@ func TestWorker_Start(t *testing.T) {
 			ResultCh: resultCh,
 		}
 
-		w := NewWorker(1)
+		w := LocalWorker{
+			id: "1",
+		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 

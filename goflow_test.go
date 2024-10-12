@@ -32,6 +32,10 @@ func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource w
 	m.Called(ctx, wg, taskSource)
 }
 
+func (m *mockWorker) SetID(id string) {
+	m.Called(id)
+}
+
 type mockTaskBroker struct {
 	mock.Mock
 }
@@ -66,7 +70,7 @@ func Test_NewGoFlow(t *testing.T) {
 		mockResults := new(mockKVStore[string, task.Result])
 
 		// Act
-		gf := NewGoFlow(0, nil, mockHandlers, mockResults, mockTaskBroker)
+		gf := NewGoFlow([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
 
 		// Assert
 		assert.NotNil(t, gf)
@@ -77,21 +81,6 @@ func Test_NewGoFlow(t *testing.T) {
 		assert.Equal(t, mockTaskBroker, gf.taskBroker)
 		assert.Equal(t, mockHandlers, gf.taskHandlers)
 		assert.Equal(t, mockResults, gf.results)
-	})
-
-	t.Run("Initialises the worker pool with correct number of workers", func(t *testing.T) {
-		// Arrange
-		ids := []int{}
-		mockWorkerFactory := func(id int) workerpool.Worker {
-			ids = append(ids, id)
-			return new(mockWorker)
-		}
-
-		// Act
-		NewGoFlow(3, mockWorkerFactory, nil, nil, nil)
-
-		// Assert
-		assert.Equal(t, []int{0, 1, 2}, ids)
 	})
 }
 

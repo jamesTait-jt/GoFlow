@@ -9,22 +9,24 @@ import (
 )
 
 type LocalWorker struct {
-	id int
+	id string
 }
 
-func NewWorker(id int) *LocalWorker {
-	return &LocalWorker{
-		id: id,
-	}
+func NewLocalWorker() *LocalWorker {
+	return &LocalWorker{}
 }
 
 func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
-	logrus.Infof("Worker %d starting...", w.id)
+	logrus.Infof("Worker %s starting...", w.id)
 
 	go func() {
 		defer wg.Done()
 		w.processQueue(ctx, taskSource)
 	}()
+}
+
+func (w *LocalWorker) SetID(id string) {
+	w.id = id
 }
 
 func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.TaskSource) {

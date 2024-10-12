@@ -4,22 +4,25 @@ import (
 	"context"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/jamesTait-jt/GoFlow/workerpool"
 )
 
 type Pool struct {
-	workers map[int]workerpool.Worker
+	workers map[string]workerpool.Worker
 	wg      *sync.WaitGroup
 }
 
-func NewWorkerPool(numWorkers int, workerFactory func(id int) workerpool.Worker) *Pool {
+func NewWorkerPool(workers []workerpool.Worker) *Pool {
 	wp := &Pool{
-		workers: make(map[int]workerpool.Worker, numWorkers),
+		workers: make(map[string]workerpool.Worker, len(workers)),
 		wg:      &sync.WaitGroup{},
 	}
 
-	for i := 0; i < numWorkers; i++ {
-		wp.workers[i] = workerFactory(i)
+	for i := 0; i < len(workers); i++ {
+		id := uuid.New().String()
+		wp.workers[id] = workers[i]
+		wp.workers[id].SetID(id)
 	}
 
 	return wp
