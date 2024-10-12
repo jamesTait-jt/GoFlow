@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jamesTait-jt/GoFlow/broker"
 	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
 	"github.com/jamesTait-jt/GoFlow/pkg/store"
 	"github.com/jamesTait-jt/GoFlow/task"
 	publicWorkerpool "github.com/jamesTait-jt/GoFlow/workerpool"
 )
+
+type Broker interface {
+	Submit(t task.Task)
+	Dequeue() <-chan task.Task
+}
 
 type workerPool interface {
 	Start(ctx context.Context, taskSource publicWorkerpool.TaskSource)
@@ -19,7 +23,7 @@ type workerPool interface {
 type GoFlow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
-	taskBroker   broker.Broker
+	taskBroker   Broker
 	workers      workerPool
 	taskHandlers store.KVStore[string, task.Handler]
 	results      store.KVStore[string, task.Result]
@@ -30,7 +34,7 @@ func NewGoFlow(
 	workerFactory func(id int) publicWorkerpool.Worker,
 	taskHandlers store.KVStore[string, task.Handler],
 	results store.KVStore[string, task.Result],
-	taskBroker broker.Broker,
+	taskBroker Broker,
 ) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
 
