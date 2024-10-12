@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jamesTait-jt/GoFlow/task"
+	"github.com/jamesTait-jt/goflow/task"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

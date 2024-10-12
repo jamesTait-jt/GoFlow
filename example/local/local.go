@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	goflow "github.com/jamesTait-jt/GoFlow"
-	"github.com/jamesTait-jt/GoFlow/broker"
-	"github.com/jamesTait-jt/GoFlow/store"
-	"github.com/jamesTait-jt/GoFlow/task"
-	"github.com/jamesTait-jt/GoFlow/worker"
-	"github.com/jamesTait-jt/GoFlow/workerpool"
+	goflow "github.com/jamesTait-jt/goflow"
+	"github.com/jamesTait-jt/goflow/broker"
+	"github.com/jamesTait-jt/goflow/store"
+	"github.com/jamesTait-jt/goflow/task"
+	"github.com/jamesTait-jt/goflow/worker"
+	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	resultsStore := store.NewInMemoryKVStore[string, task.Result]()
 	channelBroker := broker.NewChannelBroker(5)
 
-	gf := goflow.NewGoFlow(workers, taskHandlerStore, resultsStore, channelBroker)
+	gf := goflow.Newgoflow(workers, taskHandlerStore, resultsStore, channelBroker)
 
 	// Example task handler
 	taskHandler := func(payload any) task.Result {
@@ -36,7 +36,7 @@ func main() {
 
 	gf.Start()
 
-	// Push a task to the GoFlow
+	// Push a task to the goflow
 	taskIDs := []string{}
 	for i := 0; i < 10; i++ {
 		taskID, err := gf.Push(taskType, "My example payload")

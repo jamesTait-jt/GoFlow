@@ -1,6 +1,6 @@
 package broker
 
-import "github.com/jamesTait-jt/GoFlow/task"
+import "github.com/jamesTait-jt/goflow/task"
 
 type ChannelBroker struct {
 	taskQueue chan task.Task

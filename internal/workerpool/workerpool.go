@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/jamesTait-jt/GoFlow/workerpool"
+	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
 type Pool struct {

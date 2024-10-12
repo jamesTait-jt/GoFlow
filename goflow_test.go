@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jamesTait-jt/GoFlow/task"
-	"github.com/jamesTait-jt/GoFlow/workerpool"
+	"github.com/jamesTait-jt/goflow/task"
+	"github.com/jamesTait-jt/goflow/workerpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -50,15 +50,15 @@ func (m *mockKVStore[K, V]) Get(key K) (V, bool) {
 	return args.Get(0).(V), args.Bool(1)
 }
 
-func Test_NewGoFlow(t *testing.T) {
-	t.Run("Initialises GoFlow properly", func(t *testing.T) {
+func Test_Newgoflow(t *testing.T) {
+	t.Run("Initialises goflow properly", func(t *testing.T) {
 		// Arrange
 		mockTaskBroker := new(mockTaskBroker)
 		mockHandlers := new(mockKVStore[string, task.Handler])
 		mockResults := new(mockKVStore[string, task.Result])
 
 		// Act
-		gf := NewGoFlow([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
+		gf := Newgoflow([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
 
 		// Assert
 		assert.NotNil(t, gf)
@@ -72,14 +72,14 @@ func Test_NewGoFlow(t *testing.T) {
 	})
 }
 
-func Test_GoFlow_RegisterHandler(t *testing.T) {
+func Test_goflow_RegisterHandler(t *testing.T) {
 	t.Run("Puts the handler in the handler store", func(t *testing.T) {
 		// Arrange
 		mockHandlers := new(mockKVStore[string, task.Handler])
 		handler := func(_ any) task.Result {
 			return task.Result{}
 		}
-		gf := GoFlow{
+		gf := goflow{
 			taskHandlers: mockHandlers,
 		}
 		taskType := "exampleTask"
@@ -94,11 +94,11 @@ func Test_GoFlow_RegisterHandler(t *testing.T) {
 	})
 }
 
-func Test_GoFlow_Push(t *testing.T) {
+func Test_goflow_Push(t *testing.T) {
 	t.Run("Returns an error if the handler is not registered", func(t *testing.T) {
 		// Arrange
 		mockHandlers := new(mockKVStore[string, task.Handler])
-		gf := GoFlow{
+		gf := goflow{
 			taskHandlers: mockHandlers,
 		}
 		taskType := "exampleTask"
@@ -123,7 +123,7 @@ func Test_GoFlow_Push(t *testing.T) {
 		mockBroker := new(mockTaskBroker)
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := GoFlow{
+		gf := goflow{
 			taskHandlers: mockHandlers,
 			taskBroker:   mockBroker,
 			results:      mockResults,
@@ -175,12 +175,12 @@ func Test_GoFlow_Push(t *testing.T) {
 	})
 }
 
-func Test_GoFlow_GetResult(t *testing.T) {
+func Test_goflow_GetResult(t *testing.T) {
 	t.Run("Returns the result of given taskID if it exists", func(t *testing.T) {
 		// Arrange
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := GoFlow{
+		gf := goflow{
 			results: mockResults,
 		}
 
@@ -201,7 +201,7 @@ func Test_GoFlow_GetResult(t *testing.T) {
 		// Arrange
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := GoFlow{
+		gf := goflow{
 			results: mockResults,
 		}
 
@@ -220,7 +220,7 @@ func Test_GoFlow_GetResult(t *testing.T) {
 	})
 }
 
-func Test_GoFlow_Stop(t *testing.T) {
+func Test_goflow_Stop(t *testing.T) {
 	t.Run("Calls cancel and waits for all workers to shut down", func(t *testing.T) {
 		// Arrange
 		wasCancelCalled := false
@@ -231,7 +231,7 @@ func Test_GoFlow_Stop(t *testing.T) {
 		mockWorkerPool := &mockWorkerPool{}
 		mockWorkerPool.On("AwaitShutdown").Once()
 
-		gf := GoFlow{
+		gf := goflow{
 			cancel:  mockCancel,
 			workers: mockWorkerPool,
 		}
