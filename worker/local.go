@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/jamesTait-jt/GoFlow/workerpool"
+	"github.com/jamesTait-jt/goflow/workerpool"
 	"github.com/sirupsen/logrus"
 )
 

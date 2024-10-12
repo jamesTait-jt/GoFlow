@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
-	"github.com/jamesTait-jt/GoFlow/task"
-	publicWorkerpool "github.com/jamesTait-jt/GoFlow/workerpool"
+	"github.com/jamesTait-jt/goflow/internal/workerpool"
+	"github.com/jamesTait-jt/goflow/task"
+	publicWorkerpool "github.com/jamesTait-jt/goflow/workerpool"
 )
 
 type Broker interface {
@@ -24,7 +24,7 @@ type KVStore[K comparable, V any] interface {
 	Get(k K) (V, bool)
 }
 
-type GoFlow struct {
+type goflow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	taskBroker   Broker
@@ -33,17 +33,17 @@ type GoFlow struct {
 	results      KVStore[string, task.Result]
 }
 
-func NewGoFlow(
+func Newgoflow(
 	workers []publicWorkerpool.Worker,
 	taskHandlerStore KVStore[string, task.Handler],
 	resultsStore KVStore[string, task.Result],
 	taskBroker Broker,
-) *GoFlow {
+) *goflow {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	workerPool := workerpool.NewWorkerPool(workers)
 
-	gf := GoFlow{
+	gf := goflow{
 		ctx:          ctx,
 		cancel:       cancel,
 		taskBroker:   taskBroker,
@@ -55,15 +55,15 @@ func NewGoFlow(
 	return &gf
 }
 
-func (gf *GoFlow) Start() {
+func (gf *goflow) Start() {
 	gf.workers.Start(gf.ctx, gf.taskBroker)
 }
 
-func (gf *GoFlow) RegisterHandler(taskType string, handler task.Handler) {
+func (gf *goflow) RegisterHandler(taskType string, handler task.Handler) {
 	gf.taskHandlers.Put(taskType, handler)
 }
 
-func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
+func (gf *goflow) Push(taskType string, payload any) (string, error) {
 	handler, ok := gf.taskHandlers.Get(taskType)
 	if !ok {
 		return "", fmt.Errorf("no handler defined for taskType: %s", taskType)
@@ -77,12 +77,12 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 	return t.ID, nil
 }
 
-func (gf *GoFlow) GetResult(taskID string) (task.Result, bool) {
+func (gf *goflow) GetResult(taskID string) (task.Result, bool) {
 	result, ok := gf.results.Get(taskID)
 	return result, ok
 }
 
-func (gf *GoFlow) Stop() {
+func (gf *goflow) Stop() {
 	// Cancel the context, signalling to all the workers that they must stop
 	gf.cancel()
 
@@ -90,7 +90,7 @@ func (gf *GoFlow) Stop() {
 	gf.workers.AwaitShutdown()
 }
 
-func (gf *GoFlow) persistResult(t task.Task) {
+func (gf *goflow) persistResult(t task.Task) {
 	result := <-t.ResultCh
 	gf.results.Put(t.ID, result)
 }
