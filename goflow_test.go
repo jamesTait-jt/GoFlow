@@ -185,3 +185,48 @@ func Test_GoFlow_Push(t *testing.T) {
 		mockBroker.AssertCalled(t, "Submit", mock.AnythingOfType("task.Task"))
 	})
 }
+
+func Test_GoFlow(t *testing.T) {
+	t.Run("Returns the result of given taskID if it exists", func(t *testing.T) {
+		// Arrange
+		mockResults := new(mockKVStore[string, task.Result])
+
+		gf := GoFlow{
+			results: mockResults,
+		}
+
+		taskID := "taskID"
+
+		expectedResult := task.Result{Payload: "result"}
+
+		mockResults.On("Get", mock.Anything).Once().Return(expectedResult, true)
+
+		// Act
+		result, ok := gf.GetResult(taskID)
+
+		// Assert
+		assert.Equal(t, expectedResult, result)
+		assert.True(t, ok)
+	})
+	t.Run("Returns false if given taskID doesn't exist", func(t *testing.T) {
+		// Arrange
+		mockResults := new(mockKVStore[string, task.Result])
+
+		gf := GoFlow{
+			results: mockResults,
+		}
+
+		taskID := "taskID"
+
+		expectedResult := task.Result{}
+
+		mockResults.On("Get", mock.Anything).Once().Return(expectedResult, false)
+
+		// Act
+		result, ok := gf.GetResult(taskID)
+
+		// Assert
+		assert.Equal(t, expectedResult, result)
+		assert.False(t, ok)
+	})
+}
