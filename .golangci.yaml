@@ -55,7 +55,7 @@ linters:
     - wsl
 issues:
   exclude:
-  - "example/**"
+  - "example/"
   exclude-rules:
     - path: (.+)_test.go
       linters:
