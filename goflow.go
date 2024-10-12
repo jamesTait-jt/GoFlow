@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/jamesTait-jt/GoFlow/internal/workerpool"
-	"github.com/jamesTait-jt/GoFlow/pkg/store"
 	"github.com/jamesTait-jt/GoFlow/task"
 	publicWorkerpool "github.com/jamesTait-jt/GoFlow/workerpool"
 )
@@ -20,20 +19,25 @@ type workerPool interface {
 	AwaitShutdown()
 }
 
+type KVStore[K comparable, V any] interface {
+	Put(k K, v V)
+	Get(k K) (V, bool)
+}
+
 type GoFlow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	taskBroker   Broker
 	workers      workerPool
-	taskHandlers store.KVStore[string, task.Handler]
-	results      store.KVStore[string, task.Result]
+	taskHandlers KVStore[string, task.Handler]
+	results      KVStore[string, task.Result]
 }
 
 func NewGoFlow(
 	numWorkers int,
 	workerFactory func(id int) publicWorkerpool.Worker,
-	taskHandlers store.KVStore[string, task.Handler],
-	results store.KVStore[string, task.Result],
+	taskHandlers KVStore[string, task.Handler],
+	results KVStore[string, task.Result],
 	taskBroker Broker,
 ) *GoFlow {
 	ctx, cancel := context.WithCancel(context.Background())
