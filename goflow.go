@@ -134,7 +134,7 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 		return "", fmt.Errorf("no handler defined for taskType: %s", taskType)
 	}
 
-	t := task.NewTask(taskType, payload, handler)
+	t := task.New(taskType, payload, handler)
 
 	gf.taskBroker.Submit(t)
 	go gf.persistResult(t)

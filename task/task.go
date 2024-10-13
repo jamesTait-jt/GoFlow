@@ -21,7 +21,7 @@ type Result struct {
 	Error   error
 }
 
-func NewTask(taskType string, payload any, handler Handler) Task {
+func New(taskType string, payload any, handler Handler) Task {
 	id := uuid.New()
 	t := Task{
 		ID:       id.String(),
