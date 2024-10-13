@@ -25,10 +25,12 @@ type options struct {
 // These defaults are suitable for most simple use cases, but they can be
 // customized further by passing specific options to the GoFlow constructor.
 func defaultOptions() options {
+	defaultTaskBrokerChannelSize := 10
+
 	return options{
 		taskHandlerStore: store.NewInMemoryKVStore[string, task.Handler](),
 		resultsStore:     store.NewInMemoryKVStore[string, task.Result](),
-		taskBroker:       broker.NewChannelBroker(10),
+		taskBroker:       broker.NewChannelBroker(defaultTaskBrokerChannelSize),
 	}
 }
 
