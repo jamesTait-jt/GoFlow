@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	goflow "github.com/jamesTait-jt/goflow"
+	"github.com/jamesTait-jt/goflow"
 	"github.com/jamesTait-jt/goflow/broker"
 	"github.com/jamesTait-jt/goflow/store"
 	"github.com/jamesTait-jt/goflow/task"
