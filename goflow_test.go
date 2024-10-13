@@ -101,7 +101,7 @@ func Test_goflow_RegisterHandler(t *testing.T) {
 		handler := func(_ any) task.Result {
 			return task.Result{}
 		}
-		gf := Goflow{
+		gf := GoFlow{
 			taskHandlers: mockHandlers,
 		}
 		taskType := "exampleTask"
@@ -120,7 +120,7 @@ func Test_goflow_Push(t *testing.T) {
 	t.Run("Returns an error if the handler is not registered", func(t *testing.T) {
 		// Arrange
 		mockHandlers := new(mockKVStore[string, task.Handler])
-		gf := Goflow{
+		gf := GoFlow{
 			taskHandlers: mockHandlers,
 		}
 		taskType := "exampleTask"
@@ -145,7 +145,7 @@ func Test_goflow_Push(t *testing.T) {
 		mockBroker := new(mockTaskBroker)
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := Goflow{
+		gf := GoFlow{
 			taskHandlers: mockHandlers,
 			taskBroker:   mockBroker,
 			results:      mockResults,
@@ -202,7 +202,7 @@ func Test_goflow_GetResult(t *testing.T) {
 		// Arrange
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := Goflow{
+		gf := GoFlow{
 			results: mockResults,
 		}
 
@@ -223,7 +223,7 @@ func Test_goflow_GetResult(t *testing.T) {
 		// Arrange
 		mockResults := new(mockKVStore[string, task.Result])
 
-		gf := Goflow{
+		gf := GoFlow{
 			results: mockResults,
 		}
 
@@ -253,7 +253,7 @@ func Test_goflow_Stop(t *testing.T) {
 		mockWorkerPool := &mockWorkerPool{}
 		mockWorkerPool.On("AwaitShutdown").Once()
 
-		gf := Goflow{
+		gf := GoFlow{
 			cancel:  mockCancel,
 			workers: mockWorkerPool,
 		}
