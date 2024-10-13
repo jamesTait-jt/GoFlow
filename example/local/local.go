@@ -22,7 +22,12 @@ func main() {
 	resultsStore := store.NewInMemoryKVStore[string, task.Result]()
 	channelBroker := broker.NewChannelBroker(5)
 
-	gf := goflow.New(workers, taskHandlerStore, resultsStore, channelBroker)
+	gf := goflow.New(
+		workers,
+		goflow.WithTaskHandlerStore(taskHandlerStore),
+		goflow.WithResultsStore(resultsStore),
+		goflow.WithTaskBroker(channelBroker),
+	)
 
 	// Example task handler
 	taskHandler := func(payload any) task.Result {
@@ -38,6 +43,7 @@ func main() {
 
 	// Push a task to the goflow
 	taskIDs := []string{}
+
 	for i := 0; i < 10; i++ {
 		taskID, err := gf.Push(taskType, "My example payload")
 		if err != nil {
