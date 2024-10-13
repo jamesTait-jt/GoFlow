@@ -27,29 +27,32 @@ type KVStore[K comparable, V any] interface {
 type Goflow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
-	taskBroker   Broker
 	workers      workerPool
+	taskBroker   Broker
 	taskHandlers KVStore[string, task.Handler]
 	results      KVStore[string, task.Result]
 }
 
 func New(
 	workers []publicWorkerpool.Worker,
-	taskHandlerStore KVStore[string, task.Handler],
-	resultsStore KVStore[string, task.Result],
-	taskBroker Broker,
+	opts ...Option,
 ) *Goflow {
-	ctx, cancel := context.WithCancel(context.Background())
+	options := defaultOptions()
 
+	for _, o := range opts {
+		o.apply(&options)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 	workerPool := workerpool.NewWorkerPool(workers)
 
 	gf := Goflow{
 		ctx:          ctx,
 		cancel:       cancel,
-		taskBroker:   taskBroker,
 		workers:      workerPool,
-		taskHandlers: taskHandlerStore,
-		results:      resultsStore,
+		taskBroker:   options.taskBroker,
+		taskHandlers: options.taskHandlerStore,
+		results:      options.resultsStore,
 	}
 
 	return &gf

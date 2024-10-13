@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jamesTait-jt/goflow/broker"
+	"github.com/jamesTait-jt/goflow/store"
 	"github.com/jamesTait-jt/goflow/task"
 	"github.com/jamesTait-jt/goflow/workerpool"
 	"github.com/stretchr/testify/assert"
@@ -50,15 +52,35 @@ func (m *mockKVStore[K, V]) Get(key K) (V, bool) {
 	return args.Get(0).(V), args.Bool(1)
 }
 
-func Test_Newgoflow(t *testing.T) {
-	t.Run("Initialises goflow properly", func(t *testing.T) {
+func Test_New(t *testing.T) {
+	t.Run("Initialises goflow with default options", func(t *testing.T) {
+		// Arrange
+		// Act
+		gf := New([]workerpool.Worker{})
+
+		// Assert
+		assert.NotNil(t, gf)
+		assert.NotNil(t, gf.ctx)
+		assert.NotNil(t, gf.cancel)
+		assert.NotNil(t, gf.workers)
+
+		assert.IsType(t, &broker.ChannelBroker{}, gf.taskBroker)
+		assert.IsType(t, &store.InMemoryKVStore[string, task.Handler]{}, gf.taskHandlers)
+		assert.IsType(t, &store.InMemoryKVStore[string, task.Result]{}, gf.results)
+	})
+	t.Run("Initialises goflow with custom options", func(t *testing.T) {
 		// Arrange
 		mockTaskBroker := new(mockTaskBroker)
 		mockHandlers := new(mockKVStore[string, task.Handler])
 		mockResults := new(mockKVStore[string, task.Result])
 
 		// Act
-		gf := New([]workerpool.Worker{}, mockHandlers, mockResults, mockTaskBroker)
+		gf := New(
+			[]workerpool.Worker{},
+			WithTaskBroker(mockTaskBroker),
+			WithTaskHandlerStore(mockHandlers),
+			WithResultsStore(mockResults),
+		)
 
 		// Assert
 		assert.NotNil(t, gf)
