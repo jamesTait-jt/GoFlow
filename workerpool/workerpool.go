@@ -13,5 +13,10 @@ type TaskSource interface {
 
 type Worker interface {
 	SetID(id string)
-	Start(ctx context.Context, wg *sync.WaitGroup, taskSource TaskSource)
+	Start(
+		ctx context.Context,
+		wg *sync.WaitGroup,
+		taskSource TaskSource,
+		resultsCh chan<- task.Result,
+	)
 }

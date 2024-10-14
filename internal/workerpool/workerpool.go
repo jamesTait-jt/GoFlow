@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/jamesTait-jt/goflow/task"
 	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
@@ -28,10 +29,10 @@ func NewWorkerPool(workers []workerpool.Worker) *Pool {
 	return wp
 }
 
-func (wp *Pool) Start(ctx context.Context, taskSource workerpool.TaskSource) {
+func (wp *Pool) Start(ctx context.Context, taskSource workerpool.TaskSource, resultsCh chan<- task.Result) {
 	for _, worker := range wp.workers {
 		wp.wg.Add(1)
-		worker.Start(ctx, wp.wg, taskSource)
+		worker.Start(ctx, wp.wg, taskSource, resultsCh)
 	}
 }
 

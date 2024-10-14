@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/jamesTait-jt/goflow/task"
 	"github.com/jamesTait-jt/goflow/workerpool"
 	"github.com/sirupsen/logrus"
 )
@@ -16,12 +17,17 @@ func NewLocalWorker() *LocalWorker {
 	return &LocalWorker{}
 }
 
-func (w *LocalWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
+func (w *LocalWorker) Start(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	taskSource workerpool.TaskSource,
+	resultsCh chan<- task.Result,
+) {
 	logrus.Infof("Worker %s starting...", w.id)
 
 	go func() {
 		defer wg.Done()
-		w.processQueue(ctx, taskSource)
+		w.processQueue(ctx, taskSource, resultsCh)
 	}()
 }
 
@@ -29,7 +35,7 @@ func (w *LocalWorker) SetID(id string) {
 	w.id = id
 }
 
-func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.TaskSource) {
+func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.TaskSource, resultsCh chan<- task.Result) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,6 +52,7 @@ func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.Ta
 			}).Info("Picked up task")
 
 			result := t.Handler(t.Payload)
+			result.TaskID = t.ID
 
 			if result.Error != nil {
 				logrus.WithFields(logrus.Fields{
@@ -55,8 +62,7 @@ func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.Ta
 				}).Error("Failed to process task")
 			}
 
-			t.ResultCh <- result
-			close(t.ResultCh)
+			resultsCh <- result
 		}
 	}
 }

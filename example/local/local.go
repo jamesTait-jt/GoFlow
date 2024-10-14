@@ -61,4 +61,6 @@ func main() {
 		result, _ := gf.GetResult(taskIDs[i])
 		fmt.Println(result)
 	}
+
+	gf.Stop()
 }

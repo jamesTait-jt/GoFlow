@@ -16,8 +16,13 @@ type mockWorker struct {
 	mock.Mock
 }
 
-func (m *mockWorker) Start(ctx context.Context, wg *sync.WaitGroup, taskSource workerpool.TaskSource) {
-	m.Called(ctx, wg, taskSource)
+func (m *mockWorker) Start(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	taskSource workerpool.TaskSource,
+	resultsCh chan<- task.Result,
+) {
+	m.Called(ctx, wg, taskSource, resultsCh)
 }
 
 func (m *mockWorker) SetID(id string) {
@@ -62,12 +67,13 @@ func TestPool_Start(t *testing.T) {
 		ctx := context.Background()
 		wg := &sync.WaitGroup{}
 		taskSource := &mockTaskSource{}
+		resultsCh := make(chan<- task.Result)
 
 		mockWorkers := make(map[int]*mockWorker)
 
 		for i := 0; i < numWorkers; i++ {
 			mockWorker := new(mockWorker)
-			mockWorker.On("Start", ctx, wg, taskSource).Once()
+			mockWorker.On("Start", ctx, wg, taskSource, resultsCh).Once()
 			mockWorkers[i] = mockWorker
 		}
 
@@ -81,11 +87,11 @@ func TestPool_Start(t *testing.T) {
 		}
 
 		// Act
-		pool.Start(ctx, taskSource)
+		pool.Start(ctx, taskSource, resultsCh)
 
 		// Assert
 		for i := 0; i < numWorkers; i++ {
-			mockWorkers[i].AssertCalled(t, "Start", ctx, wg, taskSource)
+			mockWorkers[i].AssertCalled(t, "Start", ctx, wg, taskSource, resultsCh)
 		}
 	})
 }

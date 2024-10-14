@@ -48,12 +48,12 @@ func TestWorker_Start(t *testing.T) {
 
 		resultCh := make(chan task.Result)
 		taskToProcess := task.Task{
-			ID:       "task-1",
-			Type:     "test-task",
-			Payload:  "test-payload",
-			Handler:  handler,
-			ResultCh: resultCh,
+			ID:      "task-1",
+			Type:    "test-task",
+			Payload: "test-payload",
+			Handler: handler,
 		}
+		expectedResult.TaskID = taskToProcess.ID
 
 		w := LocalWorker{
 			id: "1",
@@ -64,7 +64,7 @@ func TestWorker_Start(t *testing.T) {
 		wg.Add(1)
 
 		// Act
-		w.Start(ctx, &wg, &taskSource)
+		w.Start(ctx, &wg, &taskSource, resultCh)
 		taskChan <- taskToProcess
 
 		result := <-resultCh
@@ -108,12 +108,12 @@ func TestWorker_Start(t *testing.T) {
 
 		resultCh := make(chan task.Result)
 		taskToProcess := task.Task{
-			ID:       "task-1",
-			Type:     "test-task",
-			Payload:  "test-payload",
-			Handler:  handler,
-			ResultCh: resultCh,
+			ID:      "task-1",
+			Type:    "test-task",
+			Payload: "test-payload",
+			Handler: handler,
 		}
+		expectedResult.TaskID = taskToProcess.ID
 
 		w := LocalWorker{
 			id: "1",
@@ -124,7 +124,7 @@ func TestWorker_Start(t *testing.T) {
 		wg.Add(1)
 
 		// Act
-		w.Start(ctx, &wg, &taskSource)
+		w.Start(ctx, &wg, &taskSource, resultCh)
 		taskChan <- taskToProcess
 
 		result := <-resultCh

@@ -27,7 +27,11 @@ type Broker interface {
 }
 
 type workerPool interface {
-	Start(ctx context.Context, taskSource publicWorkerpool.TaskSource)
+	Start(
+		ctx context.Context,
+		taskSource publicWorkerpool.TaskSource,
+		resultsCh chan<- task.Result,
+	)
 	AwaitShutdown()
 }
 
@@ -65,10 +69,8 @@ type GoFlow struct {
 	workers      workerPool
 	taskBroker   Broker
 	taskHandlers KVStore[string, task.Handler]
-
-	// results must be a thread-safe implementation of KVStore as this is the
-	// location to which workers will write their results.
-	results KVStore[string, task.Result]
+	resultsCh    chan task.Result
+	results      KVStore[string, task.Result]
 }
 
 // New creates and initializes a new GoFlow instance with the provided workers
@@ -98,13 +100,15 @@ func New(
 		taskBroker:   options.taskBroker,
 		taskHandlers: options.taskHandlerStore,
 		results:      options.resultsStore,
+		resultsCh:    make(chan task.Result),
 	}
 
 	return &gf
 }
 
 // Start begins the operation of the GoFlow instance, activating the worker pool
-// to start processing tasks from the task broker.
+// to start processing tasks from the task broker. It also spawns a goroutine to
+// wait for the results of the workers to persist them to the resultsStore.
 //
 // This method sets the workers in motion, allowing them to listen for tasks
 // submitted to the task broker and process them concurrently. Users should call
@@ -112,7 +116,8 @@ func New(
 // to ensure tasks are processed as expected. Although, task handlers can be
 // registered on the fly
 func (gf *GoFlow) Start() {
-	gf.workers.Start(gf.ctx, gf.taskBroker)
+	gf.workers.Start(gf.ctx, gf.taskBroker, gf.resultsCh)
+	go gf.persistResults(gf.resultsCh)
 }
 
 // RegisterHandler associates a task type with a specific handler function
@@ -124,10 +129,6 @@ func (gf *GoFlow) RegisterHandler(taskType string, handler task.Handler) {
 
 // Push submits a new task for processing with the specified task type and payload.
 // It looks up the corresponding handler for the task type, returning an error if none is found.
-//
-// After submitting the task to the task broker, this method spawns a goroutine to
-// listen for the task's result, which will be persisted in the results store.
-// The method returns the unique identifier of the created task.
 func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 	handler, ok := gf.taskHandlers.Get(taskType)
 	if !ok {
@@ -137,7 +138,6 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 	t := task.New(taskType, payload, handler)
 
 	gf.taskBroker.Submit(gf.ctx, t)
-	go gf.persistResult(t)
 
 	return t.ID, nil
 }
@@ -156,9 +156,17 @@ func (gf *GoFlow) GetResult(taskID string) (task.Result, bool) {
 func (gf *GoFlow) Stop() {
 	gf.cancel()
 	gf.workers.AwaitShutdown()
+	close(gf.resultsCh)
 }
 
-func (gf *GoFlow) persistResult(t task.Task) {
-	result := <-t.ResultCh
-	gf.results.Put(t.ID, result)
+func (gf *GoFlow) persistResults(resultsCh <-chan task.Result) {
+	for {
+		select {
+		case <-gf.ctx.Done():
+			return
+
+		case result := <-resultsCh:
+			gf.results.Put(result.TaskID, result)
+		}
+	}
 }

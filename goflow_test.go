@@ -3,7 +3,6 @@ package goflow
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/jamesTait-jt/goflow/broker"
@@ -18,8 +17,8 @@ type mockWorkerPool struct {
 	mock.Mock
 }
 
-func (m *mockWorkerPool) Start(ctx context.Context, taskSource workerpool.TaskSource) {
-	m.Called(ctx, taskSource)
+func (m *mockWorkerPool) Start(ctx context.Context, taskSource workerpool.TaskSource, resultsCh chan<- task.Result) {
+	m.Called(ctx, taskSource, resultsCh)
 }
 
 func (m *mockWorkerPool) AwaitShutdown() {
@@ -63,6 +62,7 @@ func Test_New(t *testing.T) {
 		assert.NotNil(t, gf.ctx)
 		assert.NotNil(t, gf.cancel)
 		assert.NotNil(t, gf.workers)
+		assert.NotNil(t, gf.resultsCh)
 
 		assert.IsType(t, &broker.ChannelBroker{}, gf.taskBroker)
 		assert.IsType(t, &store.InMemoryKVStore[string, task.Handler]{}, gf.taskHandlers)
@@ -87,6 +87,7 @@ func Test_New(t *testing.T) {
 		assert.NotNil(t, gf.ctx)
 		assert.NotNil(t, gf.cancel)
 		assert.NotNil(t, gf.workers)
+		assert.NotNil(t, gf.resultsCh)
 
 		assert.Equal(t, mockTaskBroker, gf.taskBroker)
 		assert.Equal(t, mockHandlers, gf.taskHandlers)
@@ -139,7 +140,7 @@ func Test_goflow_Push(t *testing.T) {
 		assert.EqualError(t, err, fmt.Sprintf("no handler defined for taskType: %s", taskType))
 	})
 
-	t.Run("Submits the task to the broker and handles the result", func(t *testing.T) {
+	t.Run("Submits the task to the broker", func(t *testing.T) {
 		// Arrange
 		mockHandlers := new(mockKVStore[string, task.Handler])
 		mockBroker := new(mockTaskBroker)
@@ -160,7 +161,6 @@ func Test_goflow_Push(t *testing.T) {
 
 		taskType := "exampleTask"
 		payload := "examplePayload"
-		responseFromWorker := task.Result{Payload: "Successful work!!"}
 
 		mockHandlers.On("Get", mock.Anything).Once().Return(mockHandler, true)
 
@@ -168,24 +168,10 @@ func Test_goflow_Push(t *testing.T) {
 
 		mockBroker.On("Submit", mock.Anything, mock.Anything).Once().Run(func(args mock.Arguments) {
 			submittedTask, _ = args.Get(1).(task.Task)
-
-			// Put something on the created resultChannel to simulate a response from the worker
-			submittedTask.ResultCh <- responseFromWorker
-		})
-
-		var wg sync.WaitGroup
-
-		wg.Add(1)
-
-		mockResults.On("Put", mock.Anything, mock.Anything).Once().Run(func(_ mock.Arguments) {
-			// Signal that the result was persisted, allowing the test to continue
-			wg.Done()
 		})
 
 		// Act
 		taskID, err := gf.Push(taskType, payload)
-
-		wg.Wait()
 
 		// Assert
 		assert.Nil(t, err)
@@ -195,7 +181,6 @@ func Test_goflow_Push(t *testing.T) {
 		assert.Equal(t, payload, submittedTask.Payload)
 
 		mockHandlers.AssertCalled(t, "Get", taskType)
-		mockResults.AssertCalled(t, "Put", submittedTask.ID, responseFromWorker)
 		mockBroker.AssertCalled(t, "Submit", ctx, mock.AnythingOfType("task.Task"))
 	})
 }
@@ -246,7 +231,7 @@ func Test_goflow_GetResult(t *testing.T) {
 }
 
 func Test_goflow_Stop(t *testing.T) {
-	t.Run("Calls cancel and waits for all workers to shut down", func(t *testing.T) {
+	t.Run("Calls cancel, waits for all workers to shut down, and closes the results channel", func(t *testing.T) {
 		// Arrange
 		wasCancelCalled := false
 		mockCancel := func() {
@@ -257,8 +242,9 @@ func Test_goflow_Stop(t *testing.T) {
 		mockWorkerPool.On("AwaitShutdown").Once()
 
 		gf := GoFlow{
-			cancel:  mockCancel,
-			workers: mockWorkerPool,
+			cancel:    mockCancel,
+			workers:   mockWorkerPool,
+			resultsCh: make(chan task.Result),
 		}
 
 		// Act
