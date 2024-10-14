@@ -22,3 +22,13 @@ func NewRedisBroker(client redis.Client) *RedisBroker {
 func (rb *RedisBroker) Submit(ctx context.Context, t task.Task) {
 	rb.client.LPush(ctx, rb.redisQueueKey, t)
 }
+
+func (rb *RedisBroker) Dequeue(ctx context.Context) <-chan task.Result {
+	ch := make(chan task.Result, 1)
+
+	go func() {
+		// get the result from redis
+	}()
+
+	return ch
+}
