@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/jamesTait-jt/goflow/task"
-	"github.com/jamesTait-jt/goflow/workerpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -19,7 +18,7 @@ type mockWorker struct {
 func (m *mockWorker) Start(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	taskSource workerpool.TaskSource,
+	taskSource TaskSource,
 	resultsCh chan<- task.Result,
 ) {
 	m.Called(ctx, wg, taskSource, resultsCh)
@@ -42,7 +41,7 @@ func TestNewWorkerPool(t *testing.T) {
 	t.Run("Creates a new worker pool with variables initialised", func(t *testing.T) {
 		// Arrange
 		numWorkers := 5
-		workers := make([]workerpool.Worker, numWorkers)
+		workers := make([]Worker, numWorkers)
 
 		for i := 0; i < numWorkers; i++ {
 			worker := &mockWorker{}
@@ -78,7 +77,7 @@ func TestPool_Start(t *testing.T) {
 		}
 
 		pool := &Pool{
-			workers: make(map[string]workerpool.Worker),
+			workers: make(map[string]Worker),
 			wg:      wg,
 		}
 

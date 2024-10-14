@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jamesTait-jt/goflow/internal/workerpool"
 	"github.com/jamesTait-jt/goflow/task"
-	publicWorkerpool "github.com/jamesTait-jt/goflow/workerpool"
+	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
 // Broker defines the interface for a task broker in the GoFlow framework.
@@ -26,10 +25,10 @@ type Broker interface {
 	Dequeue(ctx context.Context) <-chan task.Task
 }
 
-type workerPool interface {
+type WorkerPool interface {
 	Start(
 		ctx context.Context,
-		taskSource publicWorkerpool.TaskSource,
+		taskSource workerpool.TaskSource,
 		resultsCh chan<- task.Result,
 	)
 	AwaitShutdown()
@@ -66,7 +65,7 @@ type KVStore[K comparable, V any] interface {
 type GoFlow struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
-	workers      workerPool
+	workers      WorkerPool
 	taskBroker   Broker
 	taskHandlers KVStore[string, task.Handler]
 	resultsCh    chan task.Result
@@ -81,7 +80,7 @@ type GoFlow struct {
 // the GoFlow instance by providing options such as custom task handler stores
 // or brokers. The default options are applied if no options are provided.
 func New(
-	workers []publicWorkerpool.Worker,
+	workers []workerpool.Worker,
 	opts ...Option,
 ) *GoFlow {
 	options := defaultOptions()
