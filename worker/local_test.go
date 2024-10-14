@@ -19,8 +19,8 @@ type mockTaskSource struct {
 	mock.Mock
 }
 
-func (m *mockTaskSource) Dequeue() <-chan task.Task {
-	args := m.Called()
+func (m *mockTaskSource) Dequeue(ctx context.Context) <-chan task.Task {
+	args := m.Called(ctx)
 	return args.Get(0).(chan task.Task)
 }
 
@@ -30,8 +30,10 @@ func TestWorker_Start(t *testing.T) {
 		taskChan := make(chan task.Task)
 		defer close(taskChan)
 
+		ctx, cancel := context.WithCancel(context.Background())
+
 		taskSource := mockTaskSource{}
-		taskSource.On("Dequeue").Return(taskChan).Twice()
+		taskSource.On("Dequeue", ctx).Return(taskChan).Twice()
 
 		var receivedPayload string
 
@@ -56,8 +58,6 @@ func TestWorker_Start(t *testing.T) {
 		w := LocalWorker{
 			id: "1",
 		}
-
-		ctx, cancel := context.WithCancel(context.Background())
 
 		var wg sync.WaitGroup
 
@@ -90,8 +90,10 @@ func TestWorker_Start(t *testing.T) {
 		taskChan := make(chan task.Task)
 		defer close(taskChan)
 
+		ctx, cancel := context.WithCancel(context.Background())
+
 		taskSource := mockTaskSource{}
-		taskSource.On("Dequeue").Return(taskChan).Twice()
+		taskSource.On("Dequeue", ctx).Return(taskChan).Twice()
 
 		var receivedPayload string
 
@@ -116,8 +118,6 @@ func TestWorker_Start(t *testing.T) {
 		w := LocalWorker{
 			id: "1",
 		}
-
-		ctx, cancel := context.WithCancel(context.Background())
 
 		var wg sync.WaitGroup
 

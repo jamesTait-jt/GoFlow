@@ -8,7 +8,7 @@ import (
 )
 
 type TaskSource interface {
-	Dequeue() <-chan task.Task
+	Dequeue(ctx context.Context) <-chan task.Task
 }
 
 type Worker interface {

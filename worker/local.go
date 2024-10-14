@@ -39,7 +39,7 @@ func (w *LocalWorker) processQueue(ctx context.Context, taskSource workerpool.Ta
 
 			return
 
-		case t := <-taskSource.Dequeue():
+		case t := <-taskSource.Dequeue(ctx):
 			logrus.WithFields(logrus.Fields{
 				"worker_id": w.id,
 				"task_id":   t.ID,

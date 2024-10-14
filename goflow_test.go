@@ -30,12 +30,12 @@ type mockTaskBroker struct {
 	mock.Mock
 }
 
-func (m *mockTaskBroker) Submit(t task.Task) {
-	m.Called(t)
+func (m *mockTaskBroker) Submit(ctx context.Context, t task.Task) {
+	m.Called(ctx, t)
 }
 
-func (m *mockTaskBroker) Dequeue() <-chan task.Task {
-	args := m.Called()
+func (m *mockTaskBroker) Dequeue(ctx context.Context) <-chan task.Task {
+	args := m.Called(ctx)
 	return args.Get(0).(<-chan task.Task)
 }
 
@@ -145,7 +145,10 @@ func Test_goflow_Push(t *testing.T) {
 		mockBroker := new(mockTaskBroker)
 		mockResults := new(mockKVStore[string, task.Result])
 
+		ctx := context.Background()
+
 		gf := GoFlow{
+			ctx:          ctx,
 			taskHandlers: mockHandlers,
 			taskBroker:   mockBroker,
 			results:      mockResults,
@@ -163,10 +166,10 @@ func Test_goflow_Push(t *testing.T) {
 
 		var submittedTask task.Task
 
-		mockBroker.On("Submit", mock.Anything).Once().Run(func(args mock.Arguments) {
-			submittedTask, _ = args.Get(0).(task.Task)
+		mockBroker.On("Submit", mock.Anything, mock.Anything).Once().Run(func(args mock.Arguments) {
+			submittedTask, _ = args.Get(1).(task.Task)
 
-			// Put something on the created resultChannel to simulate a response form the worker
+			// Put something on the created resultChannel to simulate a response from the worker
 			submittedTask.ResultCh <- responseFromWorker
 		})
 
@@ -193,7 +196,7 @@ func Test_goflow_Push(t *testing.T) {
 
 		mockHandlers.AssertCalled(t, "Get", taskType)
 		mockResults.AssertCalled(t, "Put", submittedTask.ID, responseFromWorker)
-		mockBroker.AssertCalled(t, "Submit", mock.AnythingOfType("task.Task"))
+		mockBroker.AssertCalled(t, "Submit", ctx, mock.AnythingOfType("task.Task"))
 	})
 }
 

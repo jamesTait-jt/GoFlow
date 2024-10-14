@@ -28,8 +28,8 @@ type mockTaskSource struct {
 	mock.Mock
 }
 
-func (m *mockTaskSource) Dequeue() <-chan task.Task {
-	args := m.Called()
+func (m *mockTaskSource) Dequeue(ctx context.Context) <-chan task.Task {
+	args := m.Called(ctx)
 	return args.Get(0).(<-chan task.Task)
 }
 

@@ -19,11 +19,11 @@ import (
 // For a simple implementation using native channels, see broker/channel_broker.go.
 type Broker interface {
 	// Submit adds a new task for processing.
-	Submit(t task.Task)
+	Submit(ctx context.Context, t task.Task)
 
 	// Dequeue returns a read-only channel of tasks. Workers will listen on this
 	// channel to retrieve tasks for processing.
-	Dequeue() <-chan task.Task
+	Dequeue(ctx context.Context) <-chan task.Task
 }
 
 type workerPool interface {
@@ -136,7 +136,7 @@ func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
 
 	t := task.New(taskType, payload, handler)
 
-	gf.taskBroker.Submit(t)
+	gf.taskBroker.Submit(gf.ctx, t)
 	go gf.persistResult(t)
 
 	return t.ID, nil
