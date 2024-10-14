@@ -15,7 +15,8 @@ type Option interface {
 type options struct {
 	taskHandlerStore KVStore[string, task.Handler]
 	resultsStore     KVStore[string, task.Result]
-	taskBroker       Broker
+	taskBroker       Broker[task.Task]
+	resultBroker     Broker[task.Result]
 }
 
 // defaultOptions returns a set of default options for configuring GoFlow.
@@ -30,7 +31,8 @@ func defaultOptions() options {
 	return options{
 		taskHandlerStore: store.NewInMemoryKVStore[string, task.Handler](),
 		resultsStore:     store.NewInMemoryKVStore[string, task.Result](),
-		taskBroker:       broker.NewChannelBroker(defaultTaskBrokerChannelSize),
+		taskBroker:       broker.NewChannelBroker[task.Task](defaultTaskBrokerChannelSize),
+		resultBroker:     broker.NewChannelBroker[task.Result](0),
 	}
 }
 
@@ -63,7 +65,7 @@ func WithResultsStore(resultsStore KVStore[string, task.Result]) Option {
 }
 
 type taskBrokerOption struct {
-	TaskBroker Broker
+	TaskBroker Broker[task.Task]
 }
 
 func (t taskBrokerOption) apply(opts *options) {
@@ -72,6 +74,20 @@ func (t taskBrokerOption) apply(opts *options) {
 
 // WithTaskBroker allows the user to set a custom task broker, which is responsible
 // for managing task submission and distribution to workers in GoFlow.
-func WithTaskBroker(taskBroker Broker) Option {
+func WithTaskBroker(taskBroker Broker[task.Task]) Option {
+	return taskBrokerOption{TaskBroker: taskBroker}
+}
+
+type resultBrokerOption struct {
+	ResultBroker Broker[task.Result]
+}
+
+func (t resultBrokerOption) apply(opts *options) {
+	opts.resultBroker = t.ResultBroker
+}
+
+// WithResultBroker allows the user to set a custom result broker, which is provided
+// to give workers a way to send their results back
+func WithResultBroker(taskBroker Broker[task.Task]) Option {
 	return taskBrokerOption{TaskBroker: taskBroker}
 }
