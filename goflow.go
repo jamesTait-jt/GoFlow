@@ -8,9 +8,9 @@ import (
 	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
-type Broker[T task.TaskOrResult] interface {
-	task.Submitter[T]
-	task.Dequeuer[T]
+type Broker[S task.TaskOrResult, D task.TaskOrResult] interface {
+	task.Submitter[S]
+	task.Dequeuer[D]
 }
 
 type WorkerPool interface {
