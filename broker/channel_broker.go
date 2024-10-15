@@ -8,22 +8,22 @@ import (
 
 // ChannelBroker is a task broker implementation that wraps a buffered Go channel.
 // It manages task submission and retrieval for the GoFlow framework.
-type ChannelBroker struct {
-	taskQueue chan task.Task
+type ChannelBroker[T task.TaskOrResult] struct {
+	taskQueue chan T
 }
 
 // NewChannelBroker creates a new ChannelBroker with a buffered channel of the
 // specified size. The buffer size determines how many tasks can be queued before
 // further submissions block.
-func NewChannelBroker(bufferSize int) *ChannelBroker {
-	q := make(chan task.Task, bufferSize)
+func NewChannelBroker[T task.TaskOrResult](bufferSize int) *ChannelBroker[T] {
+	q := make(chan T, bufferSize)
 
-	return &ChannelBroker{taskQueue: q}
+	return &ChannelBroker[T]{taskQueue: q}
 }
 
 // Submit adds a task to the ChannelBroker's queue. If the queue is full, it will
 // block until space is available.
-func (cb *ChannelBroker) Submit(ctx context.Context, t task.Task) {
+func (cb *ChannelBroker[T]) Submit(ctx context.Context, t T) {
 	select {
 	// Without this, it is possible for this goroutine to be locked trying to
 	// write to finished workers
@@ -37,6 +37,6 @@ func (cb *ChannelBroker) Submit(ctx context.Context, t task.Task) {
 
 // Dequeue returns a read-only channel of tasks, allowing workers to retrieve
 // tasks for processing.
-func (cb *ChannelBroker) Dequeue(_ context.Context) <-chan task.Task {
+func (cb *ChannelBroker[T]) Dequeue(_ context.Context) <-chan T {
 	return cb.taskQueue
 }

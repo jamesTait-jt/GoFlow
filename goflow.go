@@ -2,34 +2,23 @@ package goflow
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/jamesTait-jt/goflow/broker"
 	"github.com/jamesTait-jt/goflow/task"
 	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
-// Broker defines the interface for a task broker in the GoFlow framework.
-// It is responsible for managing the submission and retrieval of tasks.
-//
-// Users of the GoFlow framework can provide their own implementations of
-// the Broker interface when initializing a GoFlow instance with the WithTaskBroker
-// function.
-//
-// For a simple implementation using native channels, see broker/channel_broker.go.
-type Broker interface {
-	// Submit adds a new task for processing.
-	Submit(ctx context.Context, t task.Task)
-
-	// Dequeue returns a read-only channel of tasks. Workers will listen on this
-	// channel to retrieve tasks for processing.
-	Dequeue(ctx context.Context) <-chan task.Task
+type Broker[T task.TaskOrResult] interface {
+	task.Submitter[T]
+	task.Dequeuer[T]
 }
 
 type WorkerPool interface {
 	Start(
 		ctx context.Context,
-		taskSource workerpool.TaskSource,
-		resultsCh chan<- task.Result,
+		taskQueue task.Dequeuer[task.Task],
+		results task.Submitter[task.Result],
+		taskHandlers workerpool.HandlerGetter,
 	)
 	AwaitShutdown()
 }
@@ -63,13 +52,13 @@ type KVStore[K comparable, V any] interface {
 // extensibility, making it suitable for a wide range of task-processing
 // applications.
 type GoFlow struct {
-	ctx          context.Context
-	cancel       context.CancelFunc
-	workers      WorkerPool
-	taskBroker   Broker
-	taskHandlers KVStore[string, task.Handler]
-	resultsCh    chan task.Result
-	results      KVStore[string, task.Result]
+	ctx           context.Context
+	cancel        context.CancelFunc
+	workers       WorkerPool
+	taskBroker    Broker[task.Task]
+	taskHandlers  KVStore[string, task.Handler]
+	resultsBroker Broker[task.Result]
+	results       KVStore[string, task.Result]
 }
 
 // New creates and initializes a new GoFlow instance with the provided workers
@@ -79,10 +68,7 @@ type GoFlow struct {
 // the GoFlow framework. The opts variadic parameter allows users to customize
 // the GoFlow instance by providing options such as custom task handler stores
 // or brokers. The default options are applied if no options are provided.
-func New(
-	workers []workerpool.Worker,
-	opts ...Option,
-) *GoFlow {
+func New(opts ...Option) *GoFlow {
 	options := defaultOptions()
 
 	for _, o := range opts {
@@ -90,16 +76,17 @@ func New(
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	workerPool := workerpool.NewWorkerPool(workers)
+	// TODO: Add numWorkers argument
+	workerPool := workerpool.New(10)
 
 	gf := GoFlow{
-		ctx:          ctx,
-		cancel:       cancel,
-		workers:      workerPool,
-		taskBroker:   options.taskBroker,
-		taskHandlers: options.taskHandlerStore,
-		results:      options.resultsStore,
-		resultsCh:    make(chan task.Result),
+		ctx:           ctx,
+		cancel:        cancel,
+		workers:       workerPool,
+		taskBroker:    options.taskBroker,
+		taskHandlers:  options.taskHandlerStore,
+		results:       options.resultsStore,
+		resultsBroker: broker.NewChannelBroker[task.Result](0),
 	}
 
 	return &gf
@@ -115,8 +102,8 @@ func New(
 // to ensure tasks are processed as expected. Although, task handlers can be
 // registered on the fly
 func (gf *GoFlow) Start() {
-	gf.workers.Start(gf.ctx, gf.taskBroker, gf.resultsCh)
-	go gf.persistResults(gf.resultsCh)
+	gf.workers.Start(gf.ctx, gf.taskBroker, gf.resultsBroker, gf.taskHandlers)
+	go gf.persistResults(gf.resultsBroker)
 }
 
 // RegisterHandler associates a task type with a specific handler function
@@ -129,12 +116,8 @@ func (gf *GoFlow) RegisterHandler(taskType string, handler task.Handler) {
 // Push submits a new task for processing with the specified task type and payload.
 // It looks up the corresponding handler for the task type, returning an error if none is found.
 func (gf *GoFlow) Push(taskType string, payload any) (string, error) {
-	handler, ok := gf.taskHandlers.Get(taskType)
-	if !ok {
-		return "", fmt.Errorf("no handler defined for taskType: %s", taskType)
-	}
 
-	t := task.New(taskType, payload, handler)
+	t := task.New(taskType, payload)
 
 	gf.taskBroker.Submit(gf.ctx, t)
 
@@ -155,16 +138,15 @@ func (gf *GoFlow) GetResult(taskID string) (task.Result, bool) {
 func (gf *GoFlow) Stop() {
 	gf.cancel()
 	gf.workers.AwaitShutdown()
-	close(gf.resultsCh)
 }
 
-func (gf *GoFlow) persistResults(resultsCh <-chan task.Result) {
+func (gf *GoFlow) persistResults(results task.Dequeuer[task.Result]) {
 	for {
 		select {
 		case <-gf.ctx.Done():
 			return
 
-		case result := <-resultsCh:
+		case result := <-results.Dequeue(gf.ctx):
 			gf.results.Put(result.TaskID, result)
 		}
 	}

@@ -8,22 +8,14 @@ import (
 	"github.com/jamesTait-jt/goflow/broker"
 	"github.com/jamesTait-jt/goflow/store"
 	"github.com/jamesTait-jt/goflow/task"
-	"github.com/jamesTait-jt/goflow/worker"
-	"github.com/jamesTait-jt/goflow/workerpool"
 )
 
 func main() {
-	var workers []workerpool.Worker
-	for i := 0; i < 5; i++ {
-		workers = append(workers, worker.NewLocalWorker())
-	}
-
 	taskHandlerStore := store.NewInMemoryKVStore[string, task.Handler]()
 	resultsStore := store.NewInMemoryKVStore[string, task.Result]()
-	channelBroker := broker.NewChannelBroker(5)
+	channelBroker := broker.NewChannelBroker[task.Task](5)
 
 	gf := goflow.New(
-		workers,
 		goflow.WithTaskHandlerStore(taskHandlerStore),
 		goflow.WithResultsStore(resultsStore),
 		goflow.WithTaskBroker(channelBroker),

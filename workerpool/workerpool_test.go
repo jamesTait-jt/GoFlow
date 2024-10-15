@@ -51,7 +51,7 @@ func TestNewWorkerPool(t *testing.T) {
 		}
 
 		// Act
-		wp := NewWorkerPool(workers)
+		wp := New(workers)
 
 		// Assert
 		assert.Equal(t, numWorkers, len(wp.workers))
