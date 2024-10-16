@@ -180,7 +180,7 @@ func compilePlugins(cli *client.Client) error {
 	}
 
 	// Wait for the container to finish
-	statusCh, errCh := cli.ContainerWait(context.Background(), "plugin-builder", container.WaitConditionNotRunning)
+	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		if err != nil {
@@ -190,7 +190,7 @@ func compilePlugins(cli *client.Client) error {
 	}
 
 	// Check the exit code of the plugin-builder container
-	containerInspect, err := cli.ContainerInspect(context.Background(), "plugin-builder")
+	containerInspect, err := cli.ContainerInspect(context.Background(), resp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to inspect plugin-builder container: %v", err)
 	}
