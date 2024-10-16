@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 )
+
+var dockerNetworkName = "goflow-network"
 
 func main() {
 	// Define Cobra root command
@@ -43,5 +48,32 @@ func main() {
 func deploy() error {
 	fmt.Println("deploying...")
 
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return fmt.Errorf("error creating Docker client: %v", err)
+	}
+	defer dockerClient.Close()
+
+	fmt.Println("Creating Docker network...")
+	err = createNetwork(dockerClient, dockerNetworkName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createNetwork(cli *client.Client, networkName string) error {
+	_, err := cli.NetworkInspect(context.Background(), networkName, types.NetworkInspectOptions{})
+	if err == nil {
+		fmt.Println("Network already exists")
+		return nil
+	}
+
+	_, err = cli.NetworkCreate(context.Background(), networkName, types.NetworkCreate{})
+	if err != nil {
+		return fmt.Errorf("error creating network: %v", err)
+	}
+	fmt.Println("Network created successfully")
 	return nil
 }
