@@ -115,7 +115,10 @@ func startRedis(dockerClient *client.Client) error {
 		return fmt.Errorf("error creating Redis container: %v", err)
 	}
 
-	if err := dockerClient.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := dockerClient.ContainerStart(
+		context.Background(),
+		resp.ID,
+	); err != nil {
 		return fmt.Errorf("error starting Redis container: %v", err)
 	}
 
