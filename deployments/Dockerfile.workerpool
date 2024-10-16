@@ -1,0 +1,43 @@
+# Stage 1: Build the WorkerPool binary
+FROM golang:1.23-bullseye as builder
+WORKDIR /app
+
+ENV CGO_ENABLED=1 GOOS=linux
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive \
+    apt-get install --no-install-recommends --assume-yes \
+    build-essential \
+    libsqlite3-dev
+
+# Copy Go module files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the WorkerPool source code
+COPY cmd/workerpool ./cmd/workerpool
+COPY pkg ./pkg
+COPY handlers ./handlers
+RUN mkdir ./handlers/compiled
+
+# Build the WorkerPool binary
+RUN go build -o workerpool ./cmd/workerpool
+RUN for file in ./handlers/*.go; do \
+    filename=$(basename -- "$file" .go); \
+    go build -buildmode=plugin -o ./handlers/compiled/"$filename".so "$file"; \
+    done
+
+# Stage 2: Run the WorkerPool binary
+FROM debian:bullseye-slim
+WORKDIR /app
+COPY --from=builder /app/workerpool .
+COPY --from=builder /app/handlers/compiled ./handlers/compiled
+
+# Install dependencies for CGO (like glibc)
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Expose the port for the WorkerPool service
+EXPOSE 8081
+
+# Run the WorkerPool service
+ENTRYPOINT ["./workerpool"]

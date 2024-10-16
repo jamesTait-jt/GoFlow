@@ -5,25 +5,25 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jamesTait-jt/goflow/task"
+	"github.com/jamesTait-jt/goflow/pkg/task"
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisBroker[S task.TaskOrResult, D task.TaskOrResult] struct {
+type RedisBroker[T task.TaskOrResult] struct {
 	client        *redis.Client
 	redisQueueKey string
 }
 
-func NewRedisBroker[S task.TaskOrResult, D task.TaskOrResult](
+func NewRedisBroker[T task.TaskOrResult](
 	client *redis.Client, key string,
-) *RedisBroker[S, D] {
-	return &RedisBroker[S, D]{
+) *RedisBroker[T] {
+	return &RedisBroker[T]{
 		client:        client,
 		redisQueueKey: key,
 	}
 }
 
-func (rb *RedisBroker[S, D]) Submit(ctx context.Context, submission S) error {
+func (rb *RedisBroker[T]) Submit(ctx context.Context, submission T) error {
 	serialised, err := task.Serialize(submission)
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func (rb *RedisBroker[S, D]) Submit(ctx context.Context, submission S) error {
 	return nil
 }
 
-func (rb *RedisBroker[S, D]) Dequeue(ctx context.Context) <-chan D {
-	ch := make(chan D, 1)
+func (rb *RedisBroker[T]) Dequeue(ctx context.Context) <-chan T {
+	ch := make(chan T, 1)
 
 	go func() {
 		for {
@@ -57,10 +57,10 @@ func (rb *RedisBroker[S, D]) Dequeue(ctx context.Context) <-chan D {
 					continue
 				}
 
-				result, err := task.Deserialize[D]([]byte(redisResult[1]))
+				result, err := task.Deserialize[T]([]byte(redisResult[1]))
 				if err != nil {
 					fmt.Println("Failed to deserialize task:", err)
-					
+
 					continue
 				}
 

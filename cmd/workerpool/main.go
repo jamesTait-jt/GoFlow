@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jamesTait-jt/goflow/broker"
 	"github.com/jamesTait-jt/goflow/cmd/workerpool/config"
 	"github.com/jamesTait-jt/goflow/cmd/workerpool/plugin"
-	"github.com/jamesTait-jt/goflow/store"
-	"github.com/jamesTait-jt/goflow/task"
-	"github.com/jamesTait-jt/goflow/workerpool"
+	"github.com/jamesTait-jt/goflow/pkg/broker"
+	"github.com/jamesTait-jt/goflow/pkg/store"
+	"github.com/jamesTait-jt/goflow/pkg/task"
+	"github.com/jamesTait-jt/goflow/pkg/workerpool"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -46,8 +46,8 @@ func initialiseBrokers(brokerType, brokerAddr string) (task.Dequeuer[task.Task],
 			Addr: brokerAddr,
 		})
 
-		taskQueue := broker.NewRedisBroker[task.Task, task.Task](redisClient, "tasks")
-		resultQueue := broker.NewRedisBroker[task.Result, task.Result](redisClient, "results")
+		taskQueue := broker.NewRedisBroker[task.Task](redisClient, "tasks")
+		resultQueue := broker.NewRedisBroker[task.Result](redisClient, "results")
 
 		return taskQueue, resultQueue, nil
 
