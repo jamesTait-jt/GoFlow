@@ -22,16 +22,11 @@ RUN mkdir ./handlers/compiled
 
 # Build the WorkerPool binary
 RUN go build -o workerpool ./cmd/workerpool
-RUN for file in ./handlers/*.go; do \
-    filename=$(basename -- "$file" .go); \
-    go build -buildmode=plugin -o ./handlers/compiled/"$filename".so "$file"; \
-    done
 
 # Stage 2: Run the WorkerPool binary
 FROM debian:bullseye-slim
 WORKDIR /app
 COPY --from=builder /app/workerpool .
-COPY --from=builder /app/handlers/compiled ./handlers/compiled
 
 # Install dependencies for CGO (like glibc)
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*

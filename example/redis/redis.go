@@ -12,9 +12,11 @@ import (
 )
 
 func main() {
+	fmt.Println("starting")
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: "127.0.0.1:6379",
 	})
+	fmt.Println("conntected to redis")
 
 	taskSubmitter := broker.NewRedisBroker[task.Task](redisClient, "tasks")
 	resultsGetter := broker.NewRedisBroker[task.Result](redisClient, "results")
@@ -30,6 +32,7 @@ func main() {
 
 	results := make(chan task.Result)
 	for i := 0; i < 100; i++ {
+		fmt.Println("Pushing")
 		id, _ := gf.Push("testplugin", "Im a random sleeper")
 		go func() {
 			for {

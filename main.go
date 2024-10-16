@@ -23,7 +23,6 @@ func main() {
 			exePath, err := os.Executable()
 			if err != nil {
 				fmt.Println("Error:", err)
-				return
 			}
 			exeDir := filepath.Dir(exePath)
 

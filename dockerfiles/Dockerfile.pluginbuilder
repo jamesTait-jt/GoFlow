@@ -1,0 +1,21 @@
+FROM golang:1.23-bullseye
+
+WORKDIR /app
+
+ENV CGO_ENABLED=1 GOOS=linux
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive \
+    apt-get install --no-install-recommends --assume-yes \
+    build-essential \
+    libsqlite3-dev
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY pkg ./pkg
+
+COPY dockerfiles/pluginbuilder-entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ] 
