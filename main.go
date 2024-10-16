@@ -20,6 +20,10 @@ func main() {
 		Short: "Deploy GoFlow with specified broker and handlers",
 		Run: func(cmd *cobra.Command, args []string) {
 			dockerfilePath := filepath.Join("dockerfiles", "Dockerfile.workerpool")
+			if err := checkDockerfile(dockerfilePath); err != nil {
+				fmt.Println("Error building workerpool image:", err)
+			}
+
 			if err := buildWorkerpoolImage(dockerfilePath); err != nil {
 				fmt.Println("Error building workerpool image:", err)
 				return
@@ -39,6 +43,17 @@ func buildWorkerpoolImage(dockerfilePath string) error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to build workerpool image: %w", err)
 	}
+	return nil
+}
+
+// checkDockerfile checks if the Dockerfile exists at the given path.
+func checkDockerfile(dockerfilePath string) error {
+	// Use os.Stat to check if the file exists
+	if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
+		// Return a descriptive error if the Dockerfile does not exist
+		return fmt.Errorf("Dockerfile not found at: %s", dockerfilePath)
+	}
+	// Return nil if the file exists
 	return nil
 }
 
