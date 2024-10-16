@@ -3,7 +3,6 @@ package goflow
 import (
 	"context"
 
-	"github.com/jamesTait-jt/goflow/pkg/broker"
 	"github.com/jamesTait-jt/goflow/pkg/task"
 	"github.com/jamesTait-jt/goflow/pkg/workerpool"
 )
@@ -86,7 +85,7 @@ func New(opts ...Option) *GoFlow {
 		taskBroker:    options.taskBroker,
 		taskHandlers:  options.taskHandlerStore,
 		results:       options.resultsStore,
-		resultsBroker: broker.NewChannelBroker[task.Result](0),
+		resultsBroker: options.resultBroker,
 	}
 
 	return &gf
@@ -102,7 +101,7 @@ func New(opts ...Option) *GoFlow {
 // to ensure tasks are processed as expected. Although, task handlers can be
 // registered on the fly
 func (gf *GoFlow) Start() {
-	gf.workers.Start(gf.ctx, gf.taskBroker, gf.resultsBroker, gf.taskHandlers)
+	// gf.workers.Start(gf.ctx, gf.taskBroker, gf.resultsBroker, gf.taskHandlers)
 	go gf.persistResults(gf.resultsBroker)
 }
 

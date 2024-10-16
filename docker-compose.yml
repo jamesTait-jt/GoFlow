@@ -18,7 +18,7 @@ services:
       - redis
     networks:
       - goflow-network
-    command: [ "--broker-type", "redis", "--broker-addr", "redis:6379", "--handlers-path", "./handlers/compiled" ]
+    command: [ "--num-workers", "10", "--broker-type", "redis", "--broker-addr", "redis:6379", "--handlers-path", "./handlers/compiled" ]
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379

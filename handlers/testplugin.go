@@ -9,14 +9,16 @@ import (
 )
 
 func handle(payload any) task.Result {
+	fmt.Println("Handling task with payload: ", payload)
+
 	rand.Seed(uint64(time.Now().UnixNano()))
 	n := rand.Intn(1000) // n will be between 0 and 10
 	fmt.Printf("Sleeping %d milliseconds...\n", n)
 	time.Sleep(time.Millisecond * time.Duration(n))
-	fmt.Println("Done")
-	fmt.Println("Handling task with payload: ", payload)
 
-	return task.Result{}
+	fmt.Println("Done")
+
+	return task.Result{Payload: "Success!!"}
 }
 
 func NewHandler() task.Handler {

@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jamesTait-jt/goflow/pkg/task"
@@ -13,7 +14,7 @@ type RedisBroker[T task.TaskOrResult] struct {
 	client        *redis.Client
 	redisQueueKey string
 	outChan       chan T
-	started       bool
+	started       sync.Once
 }
 
 func NewRedisBroker[T task.TaskOrResult](
@@ -23,7 +24,6 @@ func NewRedisBroker[T task.TaskOrResult](
 		client:        client,
 		redisQueueKey: key,
 		outChan:       make(chan T),
-		started:       false,
 	}
 }
 
@@ -42,17 +42,14 @@ func (rb *RedisBroker[T]) Submit(ctx context.Context, submission T) error {
 }
 
 func (rb *RedisBroker[T]) Dequeue(ctx context.Context) <-chan T {
-	if !rb.started {
+	rb.started.Do(func() {
 		go rb.pollRedis(ctx)
-
-	}
+	})
 
 	return rb.outChan
 }
 
 func (rb *RedisBroker[T]) pollRedis(ctx context.Context) {
-	rb.started = true
-
 	for {
 		select {
 		case <-ctx.Done():
