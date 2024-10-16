@@ -162,7 +162,7 @@ func compilePlugins(cli *client.Client) error {
 	}
 
 	// Create the container for the plugin-builder
-	_, err = cli.ContainerCreate(
+	resp, err := cli.ContainerCreate(
 		context.Background(),
 		containerConfig,
 		hostConfig,
@@ -175,7 +175,7 @@ func compilePlugins(cli *client.Client) error {
 	}
 
 	// Start the plugin-builder container
-	if err := cli.ContainerStart(context.Background(), "plugin-builder", container.StartOptions{}); err != nil {
+	if err := cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start plugin-builder container: %v", err)
 	}
 
