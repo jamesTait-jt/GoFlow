@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
-	"github.com/jamesTait-jt/goflow/broker"
-	"github.com/jamesTait-jt/goflow/task"
+	"github.com/jamesTait-jt/goflow/pkg/broker"
+	"github.com/jamesTait-jt/goflow/pkg/task"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,10 +15,12 @@ func main() {
 		Addr: "127.0.0.1:6379",
 	})
 
-	redisBroker := broker.NewRedisBroker[task.Task, task.Task](redisClient, "tasks")
+	redisBroker := broker.NewRedisBroker[task.Task](redisClient, "tasks")
 
 	ctx, _ := context.WithCancel(context.Background())
 
-	t := task.Task{Type: "testplugin", Payload: "payload"}
-	redisBroker.Submit(ctx, t)
+	for i := 0; i < 100; i++ {
+		t := task.Task{ID: strconv.Itoa(i), Type: "testplugin", Payload: fmt.Sprintf("im a random sleeper")}
+		redisBroker.Submit(ctx, t)
+	}
 }

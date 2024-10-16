@@ -1,0 +1,28 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - goflow-network
+
+  workerpool:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.workerpool
+    container_name: workerpool
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - goflow-network
+    command: [ "--broker-type", "redis", "--broker-addr", "redis:6379", "--handlers-path", "./handlers/compiled" ]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+networks:
+  goflow-network:
+    driver: bridge
