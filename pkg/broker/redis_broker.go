@@ -12,6 +12,8 @@ import (
 type RedisBroker[T task.TaskOrResult] struct {
 	client        *redis.Client
 	redisQueueKey string
+	outChan       chan T
+	started       bool
 }
 
 func NewRedisBroker[T task.TaskOrResult](
@@ -20,6 +22,8 @@ func NewRedisBroker[T task.TaskOrResult](
 	return &RedisBroker[T]{
 		client:        client,
 		redisQueueKey: key,
+		outChan:       make(chan T),
+		started:       false,
 	}
 }
 
@@ -38,36 +42,41 @@ func (rb *RedisBroker[T]) Submit(ctx context.Context, submission T) error {
 }
 
 func (rb *RedisBroker[T]) Dequeue(ctx context.Context) <-chan T {
-	ch := make(chan T, 1)
+	if !rb.started {
+		go rb.pollRedis(ctx)
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
+	}
 
-			default:
-				redisResult, err := rb.client.BRPop(ctx, time.Second, rb.redisQueueKey).Result()
-				if err != nil {
-					if err == redis.Nil {
-						// BRPop timed out
-						continue
-					}
-					fmt.Println("BRPop error: " + err.Error())
+	return rb.outChan
+}
+
+func (rb *RedisBroker[T]) pollRedis(ctx context.Context) {
+	rb.started = true
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+
+		default:
+			redisResult, err := rb.client.BRPop(ctx, time.Second, rb.redisQueueKey).Result()
+			if err != nil {
+				if err == redis.Nil {
+					// BRPop timed out
 					continue
 				}
-
-				result, err := task.Deserialize[T]([]byte(redisResult[1]))
-				if err != nil {
-					fmt.Println("Failed to deserialize task:", err)
-
-					continue
-				}
-
-				ch <- result
+				fmt.Println("BRPop error: " + err.Error())
+				continue
 			}
-		}
-	}()
 
-	return ch
+			result, err := task.Deserialize[T]([]byte(redisResult[1]))
+			if err != nil {
+				fmt.Println("Failed to deserialize task:", err)
+
+				continue
+			}
+
+			rb.outChan <- result
+		}
+	}
 }
