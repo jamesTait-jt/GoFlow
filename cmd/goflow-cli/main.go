@@ -69,6 +69,21 @@ func deploy() error {
 		return err
 	}
 
+	fmt.Println("Compiling plugins...")
+	err = compilePlugins(dockerClient)
+	if err != nil {
+		return err
+	}
+
+	// fmt.Println("Starting WorkerPool container...")
+	// err = startWorkerPool(cli)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Println("Deployment successful!")
+	// return nil
+
 	return nil
 }
 
@@ -124,6 +139,64 @@ func startRedis(dockerClient *client.Client) error {
 	}
 
 	fmt.Println("Redis container started successfully")
+
+	return nil
+}
+
+func compilePlugins(cli *client.Client) error {
+	containerConfig := &container.Config{
+		Image: "plugin-builder",     // Docker image to use
+		Cmd:   []string{"handlers"}, // Command to run inside the container
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	handlersPath := fmt.Sprintf("%s/handlers", cwd)
+
+	hostConfig := &container.HostConfig{
+		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)}, // Bind mount the handlers directory
+		AutoRemove: true,                                                    // Automatically remove the container when it exits
+	}
+
+	// Create the container for the plugin-builder
+	_, err = cli.ContainerCreate(
+		context.Background(),
+		containerConfig,
+		hostConfig,
+		nil,                        // No networking configuration needed here
+		nil,                        // No platform-specific configuration needed
+		"plugin-builder-container", // Name of the container
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create plugin-builder container: %v", err)
+	}
+
+	// Start the plugin-builder container
+	if err := cli.ContainerStart(context.Background(), "plugin-builder", container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start plugin-builder container: %v", err)
+	}
+
+	// Wait for the container to finish
+	statusCh, errCh := cli.ContainerWait(context.Background(), "plugin-builder", container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("error waiting for plugin-builder container: %v", err)
+		}
+	case <-statusCh:
+	}
+
+	// Check the exit code of the plugin-builder container
+	containerInspect, err := cli.ContainerInspect(context.Background(), "plugin-builder")
+	if err != nil {
+		return fmt.Errorf("failed to inspect plugin-builder container: %v", err)
+	}
+	if containerInspect.State.ExitCode != 0 {
+		return fmt.Errorf("plugin-builder container exited with code %d", containerInspect.State.ExitCode)
+	}
 
 	return nil
 }
