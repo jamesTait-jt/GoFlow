@@ -19,7 +19,15 @@ func main() {
 		Use:   "deploy",
 		Short: "Deploy GoFlow with specified broker and handlers",
 		Run: func(cmd *cobra.Command, args []string) {
-			dockerfilePath := filepath.Join("dockerfiles", "Dockerfile.workerpool")
+			fmt.Println("deploy")
+			exePath, err := os.Executable()
+			if err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+			exeDir := filepath.Dir(exePath)
+
+			dockerfilePath := filepath.Join(exeDir, "dockerfiles", "Dockerfile.workerpool")
 			if err := checkDockerfile(dockerfilePath); err != nil {
 				fmt.Println("Error building workerpool image:", err)
 			}
