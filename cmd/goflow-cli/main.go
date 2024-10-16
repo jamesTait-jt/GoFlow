@@ -7,11 +7,14 @@ import (
 	"os"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 )
 
 var dockerNetworkName = "goflow-network"
+var redisContainerName = "redis-server"
 
 func main() {
 	// Define Cobra root command
@@ -60,20 +63,63 @@ func deploy() error {
 		return err
 	}
 
+	fmt.Println("Starting Redis container...")
+	err = startRedis(dockerClient)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func createNetwork(cli *client.Client, networkName string) error {
-	_, err := cli.NetworkInspect(context.Background(), networkName, types.NetworkInspectOptions{})
+func createNetwork(dockerClien *client.Client, networkName string) error {
+	_, err := dockerClien.NetworkInspect(context.Background(), networkName, types.NetworkInspectOptions{})
 	if err == nil {
 		fmt.Println("Network already exists")
 		return nil
 	}
 
-	_, err = cli.NetworkCreate(context.Background(), networkName, types.NetworkCreate{})
+	_, err = dockerClien.NetworkCreate(context.Background(), networkName, types.NetworkCreate{})
 	if err != nil {
 		return fmt.Errorf("error creating network: %v", err)
 	}
+
 	fmt.Println("Network created successfully")
+
+	return nil
+}
+
+func startRedis(dockerClient *client.Client) error {
+	_, err := dockerClient.ContainerInspect(context.Background(), redisContainerName)
+	if err == nil {
+		fmt.Println("Redis container is already running")
+		return nil
+	}
+
+	resp, err := dockerClient.ContainerCreate(
+		context.Background(),
+		&container.Config{
+			Image: "redis:latest",
+		},
+		nil,
+		&network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				dockerNetworkName: {},
+			},
+		},
+		nil,
+		redisContainerName,
+	)
+
+	if err != nil {
+		return fmt.Errorf("error creating Redis container: %v", err)
+	}
+
+	if err := dockerClient.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
+		return fmt.Errorf("error starting Redis container: %v", err)
+	}
+
+	fmt.Println("Redis container started successfully")
+
 	return nil
 }
