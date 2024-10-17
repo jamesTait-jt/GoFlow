@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/jamesTait-jt/goflow"
-	"github.com/jamesTait-jt/goflow/broker"
-	"github.com/jamesTait-jt/goflow/store"
-	"github.com/jamesTait-jt/goflow/task"
+	"github.com/jamesTait-jt/goflow/pkg/broker"
+	"github.com/jamesTait-jt/goflow/pkg/store"
+	"github.com/jamesTait-jt/goflow/pkg/task"
 )
 
 func main() {
