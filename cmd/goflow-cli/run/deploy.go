@@ -10,6 +10,14 @@ import (
 	"github.com/jamesTait-jt/goflow/cmd/goflow-cli/docker"
 )
 
+var dockerNetworkName = "goflow-network"
+
+var redisContainerName = "redis-server"
+
+var redisImage = "redis:server"
+var pluginBuilderImage = "plugin-builder"
+var workerpoolImage = "workerpool"
+
 func Deploy() error {
 	dockerClient, err := docker.New()
 	if err != nil {

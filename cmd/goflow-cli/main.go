@@ -9,14 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dockerNetworkName = "goflow-network"
-
-var redisContainerName = "redis-server"
-
-var redisImage = "redis:server"
-var pluginBuilderImage = "plugin-builder"
-var workerpoolImage = "workerpool"
-
 func main() {
 	rootCmd := &cobra.Command{
 		Use:   "goflow",
