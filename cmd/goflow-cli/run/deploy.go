@@ -143,8 +143,7 @@ func compilePlugins(dockerClient *docker.Docker, handlersPath string) error {
 
 func startWorkerPool(dockerClient *docker.Docker, handlersPath string) error {
 	hostConfig := &container.HostConfig{
-		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
-		AutoRemove: true,
+		Binds: []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
 	}
 
 	containerID, err := dockerClient.CreateContainer(
