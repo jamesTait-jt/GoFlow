@@ -56,11 +56,6 @@ func startGoflowService(dockerClient *docker.Docker) error {
 	containerID, err := dockerClient.CreateContainer(
 		&container.Config{
 			Image: config.GoflowImage,
-			// Cmd: []string{
-			// "--broker-type", "redis",
-			// "--broker-addr", fmt.Sprintf("%s:6379", config.RedisContainerName),
-			// "--handlers-path", "/app/handlers/compiled",
-			// },
 		},
 		&container.HostConfig{
 			PortBindings: nat.PortMap{
@@ -111,16 +106,7 @@ func startRedis(dockerClient *docker.Docker) error {
 			&container.Config{
 				Image: config.RedisImage,
 			},
-			&container.HostConfig{
-				PortBindings: nat.PortMap{
-					"6379/tcp": []nat.PortBinding{
-						{
-							HostIP:   "0.0.0.0", // Listen on all network interfaces
-							HostPort: "6379",    // Expose on this port on the host
-						},
-					},
-				},
-			},
+			nil,
 			config.DockerNetworkID,
 			config.RedisContainerName,
 		)

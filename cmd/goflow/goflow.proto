@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "github.com/jamesTait-jt/goflow/cmd/goflow/pb";
+
+package goflow;
+
+// The GoFlow service definition.
+service GoFlow {
+  // Sends a task
+  rpc PushTask (TaskRequest) returns (TaskResponse) {}
+}
+
+// The request message containing the task type and payload.
+message TaskRequest {
+  string task_type = 1;
+  string payload = 2;
+}
+
+// The response message acknowledging the task.
+message TaskResponse {
+  string message = 1;
+}

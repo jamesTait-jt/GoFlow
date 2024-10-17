@@ -11,8 +11,6 @@ COPY pkg ./pkg
 
 RUN go build -o goflow ./cmd/goflow
 
-RUN go build -o goflow ./cmd/goflow
-
 FROM alpine:latest
 
 WORKDIR /root/

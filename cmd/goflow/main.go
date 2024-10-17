@@ -6,42 +6,29 @@ import (
 	"log"
 	"net"
 
+	pb "github.com/jamesTait-jt/goflow/cmd/goflow/pb"
 	"google.golang.org/grpc"
 )
 
-type Server struct{}
-
-func (s *Server) Greet(ctx context.Context, req *GreetRequest) (*GreetResponse, error) {
-	return &GreetResponse{Message: "Hello " + req.Name}, nil
+type server struct {
+	pb.GoFlowServer
 }
 
-// Request structure for the Greet method
-type GreetRequest struct {
-	Name string
-}
-
-// Response structure for the Greet method
-type GreetResponse struct {
-	Message string
+func (s *server) PushTask(ctx context.Context, req *pb.TaskRequest) (*pb.TaskResponse, error) {
+	return &pb.TaskResponse{Message: "Hello " + req.TaskType + " " + req.Payload}, nil
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
-
-	registerGreetServiceServer(grpcServer, &Server{})
+	pb.RegisterGoFlowServer(grpcServer, &server{}) // Register the service
 
 	fmt.Println("gRPC server running on port 50051...")
-	if err := grpcServer.Serve(listener); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-}
-
-func registerGreetServiceServer(s *grpc.Server, srv *Server) {
-	// Normally, this would register the service methods
-	// For now, just a placeholder
 }
