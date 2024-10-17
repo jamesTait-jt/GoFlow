@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -150,7 +151,15 @@ func (d *Docker) PullImage(imageTag string) error {
 		return nil
 	}
 
-	_, err = d.client.ImagePull(d.ctx, imageTag, image.PullOptions{})
+	resp, err := d.client.ImagePull(d.ctx, imageTag, image.PullOptions{})
+	defer resp.Close()
+
+	body, err := io.ReadAll(resp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(body)
 
 	return err
 }
