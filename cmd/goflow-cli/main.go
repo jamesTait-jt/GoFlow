@@ -33,10 +33,20 @@ func main() {
 		},
 	}
 
-	// Add deploy command to root
-	rootCmd.AddCommand(deployCmd)
+	destroyCmd := &cobra.Command{
+		Use:   "destroy",
+		Short: "Destroy workerpool and redis containers",
+		Run: func(_ *cobra.Command, _ []string) {
+			err := run.Destroy()
+			if err != nil {
+				log.Fatalf("Error during destoy: %v", err)
+			}
+		},
+	}
 
-	// Execute Cobra root command
+	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(destroyCmd)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

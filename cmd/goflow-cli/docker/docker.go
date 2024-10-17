@@ -134,6 +134,18 @@ func (d *Docker) ContainerPassed(containerID string) (bool, error) {
 	return containerInspect.State.ExitCode == 0, nil
 }
 
+func (d *Docker) DestroyContainer(containerID string) error {
+	if err := d.client.ContainerStop(d.ctx, containerID, container.StopOptions{}); err != nil {
+		return err
+	}
+
+	return d.client.ContainerRemove(
+		d.ctx,
+		containerID,
+		container.RemoveOptions{RemoveVolumes: true, Force: true},
+	)
+}
+
 func (d *Docker) ImageExistsLocally(imageTag string) (bool, error) {
 	images, err := d.client.ImageList(d.ctx, image.ListOptions{})
 	if err != nil {
