@@ -85,8 +85,6 @@ func deploy() error {
 
 	fmt.Println("Deployment successful!")
 	return nil
-
-	return nil
 }
 
 func createNetwork(dockerClien *client.Client, networkName string) error {
