@@ -27,30 +27,35 @@ func Deploy() error {
 	defer dockerClient.Close()
 
 	fmt.Println("Creating Docker network...")
+
 	err = dockerClient.CreateNetwork(dockerNetworkName)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Starting Redis container...")
+
 	err = startRedis(dockerClient)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Compiling plugins...")
+
 	err = compilePlugins(dockerClient)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Starting WorkerPool container...")
+
 	err = startWorkerPool(dockerClient)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Deployment successful!")
+
 	return nil
 }
 
@@ -134,7 +139,10 @@ func compilePlugins(dockerClient *docker.Docker) error {
 		return fmt.Errorf("failed to start plugin-builder container: %v", err)
 	}
 
-	dockerClient.WaitForContainerToFinish(containerID)
+	err = dockerClient.WaitForContainerToFinish(containerID)
+	if err != nil {
+		return fmt.Errorf("failed to wait for plugin-builder to finish: %v", err)
+	}
 
 	containerPassed, err := dockerClient.ContainerPassed(containerID)
 	if err != nil {
