@@ -19,33 +19,72 @@ func Deploy(handlersPath string) error {
 
 	fmt.Println("Creating Docker network...")
 
-	err = dockerClient.CreateNetwork(config.DockerNetworkID)
-	if err != nil {
+	if err := dockerClient.CreateNetwork(config.DockerNetworkID); err != nil {
+		return err
+	}
+
+	fmt.Println("Starting goflow gRPC service...")
+
+	if err := startGoflowService(dockerClient); err != nil {
 		return err
 	}
 
 	fmt.Println("Starting Redis container...")
 
-	err = startRedis(dockerClient)
-	if err != nil {
+	if err := startRedis(dockerClient); err != nil {
 		return err
 	}
 
 	fmt.Println("Compiling plugins...")
 
-	err = compilePlugins(dockerClient, handlersPath)
-	if err != nil {
+	if err := compilePlugins(dockerClient, handlersPath); err != nil {
 		return err
 	}
 
 	fmt.Println("Starting WorkerPool container...")
 
-	err = startWorkerPool(dockerClient, handlersPath)
-	if err != nil {
+	if err := startWorkerPool(dockerClient, handlersPath); err != nil {
 		return err
 	}
 
 	fmt.Println("Deployment successful!")
+
+	return nil
+}
+
+func startGoflowService(dockerClient *docker.Docker) error {
+	containerID, err := dockerClient.CreateContainer(
+		&container.Config{
+			Image: config.GoflowImage,
+			// Cmd: []string{
+			// "--broker-type", "redis",
+			// "--broker-addr", fmt.Sprintf("%s:6379", config.RedisContainerName),
+			// "--handlers-path", "/app/handlers/compiled",
+			// },
+		},
+		&container.HostConfig{
+			PortBindings: nat.PortMap{
+				"50051/tcp": []nat.PortBinding{
+					{
+						HostIP:   "0.0.0.0", // Listen on all network interfaces
+						HostPort: "50021",   // Expose on this port on the host
+					},
+				},
+			},
+		},
+		config.DockerNetworkID,
+		config.GoflowContainerName,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to create goflow container: %v", err)
+	}
+
+	if err := dockerClient.StartContainer(containerID); err != nil {
+		return fmt.Errorf("error starting goflow container: %v", err)
+	}
+
+	fmt.Println("goflow container started successfully")
 
 	return nil
 }
@@ -165,7 +204,7 @@ func startWorkerPool(dockerClient *docker.Docker, handlersPath string) error {
 	}
 
 	if err := dockerClient.StartContainer(containerID); err != nil {
-		return fmt.Errorf("error starting Redis container: %v", err)
+		return fmt.Errorf("error starting workerpool container: %v", err)
 	}
 
 	fmt.Println("WorkerPool container started successfully")
