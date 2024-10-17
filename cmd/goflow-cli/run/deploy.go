@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
 	"github.com/jamesTait-jt/goflow/cmd/goflow-cli/docker"
 )
 
