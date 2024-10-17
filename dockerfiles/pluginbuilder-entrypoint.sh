@@ -12,6 +12,6 @@ fi
 # Compile all Go files in the specified directory
 for file in /app/"$1"/*.go; do
     # Get the base name without the extension for output
-    output_file="/app/$1/$(basename "$file" .go).so"
+    output_file="/app/$1/compiled/$(basename "$file" .go).so"
     go build -buildmode=plugin -o "$output_file" "$file"
 done

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
@@ -15,6 +14,9 @@ import (
 
 var dockerNetworkName = "goflow-network"
 var redisContainerName = "redis-server"
+var pluginBuilderContainerName = "plugin-builder-container"
+var workerpoolImage = "workerpool"
+var pluginBuilderImage = "plugin-builder"
 
 func main() {
 	// Define Cobra root command
@@ -75,26 +77,26 @@ func deploy() error {
 		return err
 	}
 
-	// fmt.Println("Starting WorkerPool container...")
-	// err = startWorkerPool(cli)
-	// if err != nil {
-	// 	return err
-	// }
+	fmt.Println("Starting WorkerPool container...")
+	err = startWorkerPool(dockerClient)
+	if err != nil {
+		return err
+	}
 
-	// fmt.Println("Deployment successful!")
-	// return nil
+	fmt.Println("Deployment successful!")
+	return nil
 
 	return nil
 }
 
 func createNetwork(dockerClien *client.Client, networkName string) error {
-	_, err := dockerClien.NetworkInspect(context.Background(), networkName, types.NetworkInspectOptions{})
+	_, err := dockerClien.NetworkInspect(context.Background(), networkName, network.InspectOptions{})
 	if err == nil {
 		fmt.Println("Network already exists")
 		return nil
 	}
 
-	_, err = dockerClien.NetworkCreate(context.Background(), networkName, types.NetworkCreate{})
+	_, err = dockerClien.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating network: %v", err)
 	}
@@ -156,11 +158,9 @@ func compilePlugins(dockerClient *client.Client) error {
 
 	handlersPath := fmt.Sprintf("%s/handlers", cwd)
 
-	fmt.Println(handlersPath)
-
 	hostConfig := &container.HostConfig{
-		Binds: []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
-		// AutoRemove: true,
+		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
+		AutoRemove: true,
 	}
 
 	// Create the container for the plugin-builder
@@ -170,7 +170,7 @@ func compilePlugins(dockerClient *client.Client) error {
 		hostConfig,
 		nil,
 		nil,
-		"plugin-builder-container",
+		pluginBuilderContainerName,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create plugin-builder container: %v", err)
@@ -200,5 +200,33 @@ func compilePlugins(dockerClient *client.Client) error {
 		return fmt.Errorf("plugin-builder container exited with code %d", containerInspect.State.ExitCode)
 	}
 
+	return nil
+}
+
+func startWorkerPool(cli *client.Client) error {
+	_, err := cli.ContainerCreate(
+		context.Background(),
+		&container.Config{
+			Image: workerpoolImage,
+			Cmd: []string{
+				"--broker-type", "redis",
+				"--broker-addr", fmt.Sprintf("%s:6379", redisContainerName),
+				"--handlers-path", "/app/handlers/compiled",
+			},
+		},
+		nil,
+		&network.NetworkingConfig{
+			EndpointsConfig: map[string]*network.EndpointSettings{
+				dockerNetworkName: {},
+			},
+		},
+		nil,
+		"",
+	)
+	if err != nil {
+		return fmt.Errorf("error creating WorkerPool container: %v", err)
+	}
+
+	fmt.Println("WorkerPool container started successfully")
 	return nil
 }
