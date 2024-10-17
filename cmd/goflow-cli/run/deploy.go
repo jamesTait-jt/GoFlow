@@ -15,7 +15,7 @@ var dockerNetworkName = "goflow-network"
 
 var redisContainerName = "redis-server"
 
-var redisImage = "redis:server"
+var redisImage = "redis:latest"
 var pluginBuilderImage = "plugin-builder"
 var workerpoolImage = "workerpool"
 
@@ -67,14 +67,14 @@ func startRedis(dockerClient *docker.Docker) error {
 	}
 
 	if !exists {
-		err = dockerClient.PullImage(redisContainerName)
+		err = dockerClient.PullImage(redisImage)
 		if err != nil {
 			return fmt.Errorf("failed to pull redis image: %v", err)
 		}
 
 		containerID, err = dockerClient.CreateContainer(
 			&container.Config{
-				Image: "redis:latest",
+				Image: redisImage,
 			},
 			&container.HostConfig{
 				PortBindings: nat.PortMap{
