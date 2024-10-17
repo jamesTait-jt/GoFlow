@@ -18,16 +18,20 @@ func main() {
 	deployCmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy workerpool with Redis broker and compiled plugins",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := run.Deploy()
+		Run: func(_ *cobra.Command, args []string) {
+			if len(args) == 0 {
+				fmt.Println("handlers path is required")
+
+				return
+			}
+
+			handlersPath := args[0]
+			err := run.Deploy(handlersPath)
 			if err != nil {
 				log.Fatalf("Error during deployment: %v", err)
 			}
 		},
 	}
-
-	// Add flags for the deploy command
-	// deployCmd.Flags().StringVarP(&brokerType, "broker", "b", "redis", "Specify the broker type (default: redis)")
 
 	// Add deploy command to root
 	rootCmd.AddCommand(deployCmd)

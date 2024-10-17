@@ -3,8 +3,6 @@ package run
 import (
 	"errors"
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
@@ -19,7 +17,7 @@ var redisImage = "redis:latest"
 var pluginBuilderImage = "plugin-builder"
 var workerpoolImage = "workerpool"
 
-func Deploy() error {
+func Deploy(handlersPath string) error {
 	dockerClient, err := docker.New()
 	if err != nil {
 		return fmt.Errorf("error creating Docker client: %v", err)
@@ -42,14 +40,14 @@ func Deploy() error {
 
 	fmt.Println("Compiling plugins...")
 
-	err = compilePlugins(dockerClient)
+	err = compilePlugins(dockerClient, handlersPath)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Starting WorkerPool container...")
 
-	err = startWorkerPool(dockerClient)
+	err = startWorkerPool(dockerClient, handlersPath)
 	if err != nil {
 		return err
 	}
@@ -109,15 +107,7 @@ func startRedis(dockerClient *docker.Docker) error {
 	return nil
 }
 
-func compilePlugins(dockerClient *docker.Docker) error {
-	// TODO: Make this better
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	handlersPath := fmt.Sprintf("%s/handlers", cwd)
-
+func compilePlugins(dockerClient *docker.Docker, handlersPath string) error {
 	containerID, err := dockerClient.CreateContainer(
 		&container.Config{
 			Image: pluginBuilderImage,
@@ -158,14 +148,7 @@ func compilePlugins(dockerClient *docker.Docker) error {
 	return nil
 }
 
-func startWorkerPool(dockerClient *docker.Docker) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	handlersPath := fmt.Sprintf("%s/handlers", cwd)
-
+func startWorkerPool(dockerClient *docker.Docker, handlersPath string) error {
 	hostConfig := &container.HostConfig{
 		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
 		AutoRemove: true,
@@ -184,6 +167,7 @@ func startWorkerPool(dockerClient *docker.Docker) error {
 		dockerNetworkName,
 		"",
 	)
+
 	if err != nil {
 		return fmt.Errorf("failed to create workerpool container: %v", err)
 	}
