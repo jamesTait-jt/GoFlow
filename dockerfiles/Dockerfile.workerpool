@@ -17,8 +17,6 @@ RUN go mod download
 # Copy the WorkerPool source code
 COPY cmd/workerpool ./cmd/workerpool
 COPY pkg ./pkg
-COPY handlers ./handlers
-RUN mkdir ./handlers/compiled
 
 # Build the WorkerPool binary
 RUN go build -o workerpool ./cmd/workerpool
@@ -29,7 +27,9 @@ WORKDIR /app
 COPY --from=builder /app/workerpool .
 
 # Install dependencies for CGO (like glibc)
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # Expose the port for the WorkerPool service
 EXPOSE 8081

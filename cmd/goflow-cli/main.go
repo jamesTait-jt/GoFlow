@@ -204,6 +204,18 @@ func compilePlugins(dockerClient *client.Client) error {
 }
 
 func startWorkerPool(dockerClient *client.Client) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	handlersPath := fmt.Sprintf("%s/handlers", cwd)
+
+	hostConfig := &container.HostConfig{
+		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
+		AutoRemove: true,
+	}
+
 	resp, err := dockerClient.ContainerCreate(
 		context.Background(),
 		&container.Config{
@@ -214,7 +226,7 @@ func startWorkerPool(dockerClient *client.Client) error {
 				"--handlers-path", "/app/handlers/compiled",
 			},
 		},
-		nil,
+		hostConfig,
 		&network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				dockerNetworkName: {},
