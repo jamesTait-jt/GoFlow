@@ -16,14 +16,14 @@ func Destroy() error {
 
 	fmt.Println("Destroying Docker network...")
 
-	if err = dockerClient.DestroyNetwork(config.DockerNetworkID); err != nil {
-		return fmt.Errorf("failed to destroy network '%s': %v", config.DockerNetworkID, err)
-	}
-
 	for _, containerID := range []string{config.RedisContainerName, config.WorkerpoolContainerName} {
 		if err = dockerClient.DestroyContainer(config.RedisContainerName); err != nil {
 			return fmt.Errorf("failed to destroy container '%s': %v", containerID, err)
 		}
+	}
+
+	if err = dockerClient.DestroyNetwork(config.DockerNetworkID); err != nil {
+		return fmt.Errorf("failed to destroy network '%s': %v", config.DockerNetworkID, err)
 	}
 
 	return nil
