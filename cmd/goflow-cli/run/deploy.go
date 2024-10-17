@@ -19,7 +19,7 @@ func Deploy(handlersPath string) error {
 
 	fmt.Println("Creating Docker network...")
 
-	err = dockerClient.CreateNetwork(config.DockerNetworkName)
+	err = dockerClient.CreateNetwork(config.DockerNetworkID)
 	if err != nil {
 		return err
 	}
@@ -51,24 +51,24 @@ func Deploy(handlersPath string) error {
 }
 
 func startRedis(dockerClient *docker.Docker) error {
-	exists, running, containerID, err := dockerClient.ContainerInfo(config.RedisContainerName)
+	containerInfo, err := dockerClient.ContainerInfo(config.RedisContainerName)
 	if err != nil {
 		return err
 	}
 
-	if running {
+	if containerInfo.Running {
 		fmt.Println("Redis container already started")
 
 		return nil
 	}
 
-	if !exists {
+	if !containerInfo.Exists {
 		err = dockerClient.PullImage(config.RedisImage)
 		if err != nil {
 			return fmt.Errorf("failed to pull redis image: %v", err)
 		}
 
-		containerID, err = dockerClient.CreateContainer(
+		containerInfo.ID, err = dockerClient.CreateContainer(
 			&container.Config{
 				Image: config.RedisImage,
 			},
@@ -82,7 +82,7 @@ func startRedis(dockerClient *docker.Docker) error {
 					},
 				},
 			},
-			config.DockerNetworkName,
+			config.DockerNetworkID,
 			config.RedisContainerName,
 		)
 
@@ -91,7 +91,7 @@ func startRedis(dockerClient *docker.Docker) error {
 		}
 	}
 
-	if err = dockerClient.StartContainer(containerID); err != nil {
+	if err = dockerClient.StartContainer(containerInfo.ID); err != nil {
 		return fmt.Errorf("error starting redis container: %v", err)
 	}
 
@@ -157,7 +157,7 @@ func startWorkerPool(dockerClient *docker.Docker, handlersPath string) error {
 			},
 		},
 		hostConfig,
-		config.DockerNetworkName,
+		config.DockerNetworkID,
 		config.WorkerpoolContainerName,
 	)
 

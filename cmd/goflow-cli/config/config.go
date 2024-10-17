@@ -1,6 +1,6 @@
 package config
 
-var DockerNetworkName = "goflow-network"
+var DockerNetworkID = "goflow-network"
 
 var RedisImage = "redis:latest"
 var RedisContainerName = "goflow-redis-server"

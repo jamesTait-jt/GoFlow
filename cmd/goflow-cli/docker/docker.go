@@ -28,14 +28,14 @@ func New() (*Docker, error) {
 	}, nil
 }
 
-func (d *Docker) CreateNetwork(networkName string) error {
-	_, err := d.client.NetworkInspect(d.ctx, networkName, network.InspectOptions{})
+func (d *Docker) CreateNetwork(networkID string) error {
+	_, err := d.client.NetworkInspect(d.ctx, networkID, network.InspectOptions{})
 	if err == nil {
 		fmt.Println("Network already exists")
 		return nil
 	}
 
-	_, err = d.client.NetworkCreate(d.ctx, networkName, network.CreateOptions{})
+	_, err = d.client.NetworkCreate(d.ctx, networkID, network.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating network: %v", err)
 	}
@@ -45,34 +45,44 @@ func (d *Docker) CreateNetwork(networkName string) error {
 	return nil
 }
 
-func (d *Docker) ContainerInfo(containerName string) (bool, bool, string, error) {
+func (d *Docker) DestroyNetwork(networkID string) error {
+	return d.client.NetworkRemove(d.ctx, networkID)
+}
+
+type ContainerInfo struct {
+	Exists  bool
+	Running bool
+	ID      string
+}
+
+func (d *Docker) ContainerInfo(containerName string) (ContainerInfo, error) {
 	containerJSON, err := d.client.ContainerInspect(d.ctx, containerName)
 	if err != nil {
 		if client.IsErrNotFound(err) {
-			return false, false, "", nil
+			return ContainerInfo{false, false, ""}, nil
 		}
 
-		return false, false, "", fmt.Errorf("failed to inspect container '%s': %v", containerName, err)
+		return ContainerInfo{}, fmt.Errorf("failed to inspect container '%s': %v", containerName, err)
 	}
 
 	if containerJSON.State.Running {
-		return true, true, containerJSON.ID, nil
+		return ContainerInfo{true, true, containerJSON.ID}, nil
 	}
 
-	return true, false, containerJSON.ID, nil
+	return ContainerInfo{true, false, containerJSON.ID}, nil
 }
 
 func (d *Docker) CreateContainer(
 	config *container.Config,
 	hostConfig *container.HostConfig,
-	networkName string,
+	networkID string,
 	containerName string,
 ) (string, error) {
 	var networkConfig *network.NetworkingConfig
-	if networkName != "" {
+	if networkID != "" {
 		networkConfig = &network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
-				networkName: {},
+				networkID: {},
 			},
 		}
 	}
