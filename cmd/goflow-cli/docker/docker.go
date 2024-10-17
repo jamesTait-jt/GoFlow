@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
@@ -120,6 +121,38 @@ func (d *Docker) ContainerPassed(containerID string) (bool, error) {
 	}
 
 	return containerInspect.State.ExitCode == 0, nil
+}
+
+func (d *Docker) ImageExistsLocally(imageTag string) (bool, error) {
+	images, err := d.client.ImageList(d.ctx, image.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	for i := 0; i < len(images); i++ {
+		for _, tag := range images[i].RepoTags {
+			if tag == imageTag {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func (d *Docker) PullImage(imageTag string) error {
+	imageExists, err := d.ImageExistsLocally(imageTag)
+	if err != nil {
+		return err
+	}
+
+	if imageExists {
+		return nil
+	}
+
+	_, err = d.client.ImagePull(d.ctx, imageTag, image.PullOptions{})
+
+	return err
 }
 
 func (d *Docker) Close() {

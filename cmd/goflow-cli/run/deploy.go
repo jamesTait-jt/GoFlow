@@ -67,6 +67,11 @@ func startRedis(dockerClient *docker.Docker) error {
 	}
 
 	if !exists {
+		err = dockerClient.PullImage(redisContainerName)
+		if err != nil {
+			return fmt.Errorf("failed to pull redis image: %v", err)
+		}
+
 		containerID, err = dockerClient.CreateContainer(
 			&container.Config{
 				Image: "redis:latest",
