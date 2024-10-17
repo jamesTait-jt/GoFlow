@@ -203,8 +203,8 @@ func compilePlugins(dockerClient *client.Client) error {
 	return nil
 }
 
-func startWorkerPool(cli *client.Client) error {
-	_, err := cli.ContainerCreate(
+func startWorkerPool(dockerClient *client.Client) error {
+	resp, err := dockerClient.ContainerCreate(
 		context.Background(),
 		&container.Config{
 			Image: workerpoolImage,
@@ -225,6 +225,14 @@ func startWorkerPool(cli *client.Client) error {
 	)
 	if err != nil {
 		return fmt.Errorf("error creating WorkerPool container: %v", err)
+	}
+
+	if err := dockerClient.ContainerStart(
+		context.Background(),
+		resp.ID,
+		container.StartOptions{},
+	); err != nil {
+		return fmt.Errorf("error starting Redis container: %v", err)
 	}
 
 	fmt.Println("WorkerPool container started successfully")
