@@ -6,16 +6,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
+	"github.com/jamesTait-jt/goflow/cmd/goflow-cli/config"
 	"github.com/jamesTait-jt/goflow/cmd/goflow-cli/docker"
 )
-
-var dockerNetworkName = "goflow-network"
-
-var redisContainerName = "redis-server"
-
-var redisImage = "redis:latest"
-var pluginBuilderImage = "plugin-builder"
-var workerpoolImage = "workerpool"
 
 func Deploy(handlersPath string) error {
 	dockerClient, err := docker.New()
@@ -26,7 +19,7 @@ func Deploy(handlersPath string) error {
 
 	fmt.Println("Creating Docker network...")
 
-	err = dockerClient.CreateNetwork(dockerNetworkName)
+	err = dockerClient.CreateNetwork(config.DockerNetworkName)
 	if err != nil {
 		return err
 	}
@@ -58,7 +51,7 @@ func Deploy(handlersPath string) error {
 }
 
 func startRedis(dockerClient *docker.Docker) error {
-	exists, running, containerID, err := dockerClient.ContainerInfo(redisContainerName)
+	exists, running, containerID, err := dockerClient.ContainerInfo(config.RedisContainerName)
 	if err != nil {
 		return err
 	}
@@ -70,14 +63,14 @@ func startRedis(dockerClient *docker.Docker) error {
 	}
 
 	if !exists {
-		err = dockerClient.PullImage(redisImage)
+		err = dockerClient.PullImage(config.RedisImage)
 		if err != nil {
 			return fmt.Errorf("failed to pull redis image: %v", err)
 		}
 
 		containerID, err = dockerClient.CreateContainer(
 			&container.Config{
-				Image: redisImage,
+				Image: config.RedisImage,
 			},
 			&container.HostConfig{
 				PortBindings: nat.PortMap{
@@ -89,8 +82,8 @@ func startRedis(dockerClient *docker.Docker) error {
 					},
 				},
 			},
-			dockerNetworkName,
-			redisContainerName,
+			config.DockerNetworkName,
+			config.RedisContainerName,
 		)
 
 		if err != nil {
@@ -110,7 +103,7 @@ func startRedis(dockerClient *docker.Docker) error {
 func compilePlugins(dockerClient *docker.Docker, handlersPath string) error {
 	containerID, err := dockerClient.CreateContainer(
 		&container.Config{
-			Image: pluginBuilderImage,
+			Image: config.PluginBuilderImage,
 			Cmd:   []string{"handlers"},
 		},
 		&container.HostConfig{
@@ -156,16 +149,16 @@ func startWorkerPool(dockerClient *docker.Docker, handlersPath string) error {
 
 	containerID, err := dockerClient.CreateContainer(
 		&container.Config{
-			Image: workerpoolImage,
+			Image: config.WorkerpoolImage,
 			Cmd: []string{
 				"--broker-type", "redis",
-				"--broker-addr", fmt.Sprintf("%s:6379", redisContainerName),
+				"--broker-addr", fmt.Sprintf("%s:6379", config.RedisContainerName),
 				"--handlers-path", "/app/handlers/compiled",
 			},
 		},
 		hostConfig,
-		dockerNetworkName,
-		"",
+		config.DockerNetworkName,
+		config.WorkerpoolContainerName,
 	)
 
 	if err != nil {
