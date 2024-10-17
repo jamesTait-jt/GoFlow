@@ -151,15 +151,18 @@ func (d *Docker) PullImage(imageTag string) error {
 		return nil
 	}
 
-	resp, err := d.client.ImagePull(d.ctx, imageTag, image.PullOptions{})
-	defer resp.Close()
+	fmt.Printf("Pulling %s...\n", imageTag)
 
-	body, err := io.ReadAll(resp)
+	resp, err := d.client.ImagePull(d.ctx, imageTag, image.PullOptions{})
 	if err != nil {
 		return err
 	}
+	defer resp.Close()
 
-	fmt.Println(body)
+	_, err = io.ReadAll(resp)
+	if err != nil {
+		return err
+	}
 
 	return err
 }
