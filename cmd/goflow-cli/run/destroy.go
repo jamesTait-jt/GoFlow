@@ -28,5 +28,7 @@ func Destroy() error {
 		return fmt.Errorf("failed to destroy network '%s': %v", config.DockerNetworkID, err)
 	}
 
+	fmt.Println("Done!")
+
 	return nil
 }
