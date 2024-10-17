@@ -1,32 +1,31 @@
 package main
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/jamesTait-jt/goflow/cmd/goflow-cli/docker"
 	"github.com/spf13/cobra"
 )
 
 var dockerNetworkName = "goflow-network"
+
 var redisContainerName = "redis-server"
-var pluginBuilderContainerName = "plugin-builder-container"
-var workerpoolImage = "workerpool"
+
+var redisImage = "redis:server"
 var pluginBuilderImage = "plugin-builder"
+var workerpoolImage = "workerpool"
 
 func main() {
-	// Define Cobra root command
 	rootCmd := &cobra.Command{
 		Use:   "goflow",
 		Short: "Goflow CLI tool to deploy workerpool and plugins using Docker",
 	}
 
-	// Define deploy command
 	deployCmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy workerpool with Redis broker and compiled plugins",
@@ -52,16 +51,14 @@ func main() {
 }
 
 func deploy() error {
-	fmt.Println("deploying...")
-
-	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	dockerClient, err := docker.New()
 	if err != nil {
 		return fmt.Errorf("error creating Docker client: %v", err)
 	}
 	defer dockerClient.Close()
 
 	fmt.Println("Creating Docker network...")
-	err = createNetwork(dockerClient, dockerNetworkName)
+	err = dockerClient.CreateNetwork(dockerNetworkName)
 	if err != nil {
 		return err
 	}
@@ -88,64 +85,44 @@ func deploy() error {
 	return nil
 }
 
-func createNetwork(dockerClien *client.Client, networkName string) error {
-	_, err := dockerClien.NetworkInspect(context.Background(), networkName, network.InspectOptions{})
-	if err == nil {
-		fmt.Println("Network already exists")
+func startRedis(dockerClient *docker.Docker) error {
+	exists, running, containerID, err := dockerClient.ContainerInfo(redisContainerName)
+	if err != nil {
+		return err
+	}
+
+	if running {
+		fmt.Println("Redis container already started")
+
 		return nil
 	}
 
-	_, err = dockerClien.NetworkCreate(context.Background(), networkName, network.CreateOptions{})
-	if err != nil {
-		return fmt.Errorf("error creating network: %v", err)
-	}
-
-	fmt.Println("Network created successfully")
-
-	return nil
-}
-
-func startRedis(dockerClient *client.Client) error {
-	_, err := dockerClient.ContainerInspect(context.Background(), redisContainerName)
-	if err == nil {
-		fmt.Println("Redis container is already running")
-		return nil
-	}
-	portBindings := nat.PortMap{
-		"6379/tcp": []nat.PortBinding{
-			{
-				HostIP:   "0.0.0.0", // Listen on all network interfaces
-				HostPort: "6379",    // Expose on this port on the host
+	if !exists {
+		containerID, err = dockerClient.CreateContainer(
+			&container.Config{
+				Image: "redis:latest",
 			},
-		},
-	}
-	resp, err := dockerClient.ContainerCreate(
-		context.Background(),
-		&container.Config{
-			Image: "redis:latest",
-		},
-		&container.HostConfig{
-			PortBindings: portBindings,
-		},
-		&network.NetworkingConfig{
-			EndpointsConfig: map[string]*network.EndpointSettings{
-				dockerNetworkName: {},
+			&container.HostConfig{
+				PortBindings: nat.PortMap{
+					"6379/tcp": []nat.PortBinding{
+						{
+							HostIP:   "0.0.0.0", // Listen on all network interfaces
+							HostPort: "6379",    // Expose on this port on the host
+						},
+					},
+				},
 			},
-		},
-		nil,
-		redisContainerName,
-	)
+			dockerNetworkName,
+			redisContainerName,
+		)
 
-	if err != nil {
-		return fmt.Errorf("error creating Redis container: %v", err)
+		if err != nil {
+			return fmt.Errorf("error creating Redis container: %v", err)
+		}
 	}
 
-	if err := dockerClient.ContainerStart(
-		context.Background(),
-		resp.ID,
-		container.StartOptions{},
-	); err != nil {
-		return fmt.Errorf("error starting Redis container: %v", err)
+	if err = dockerClient.StartContainer(containerID); err != nil {
+		return fmt.Errorf("error starting redis container: %v", err)
 	}
 
 	fmt.Println("Redis container started successfully")
@@ -153,12 +130,8 @@ func startRedis(dockerClient *client.Client) error {
 	return nil
 }
 
-func compilePlugins(dockerClient *client.Client) error {
-	containerConfig := &container.Config{
-		Image: "plugin-builder",
-		Cmd:   []string{"handlers"},
-	}
-
+func compilePlugins(dockerClient *docker.Docker) error {
+	// TODO: Make this better
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -166,52 +139,44 @@ func compilePlugins(dockerClient *client.Client) error {
 
 	handlersPath := fmt.Sprintf("%s/handlers", cwd)
 
-	hostConfig := &container.HostConfig{
-		Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
-		AutoRemove: true,
-	}
-
-	// Create the container for the plugin-builder
-	resp, err := dockerClient.ContainerCreate(
-		context.Background(),
-		containerConfig,
-		hostConfig,
-		nil,
-		nil,
-		pluginBuilderContainerName,
+	containerID, err := dockerClient.CreateContainer(
+		&container.Config{
+			Image: pluginBuilderImage,
+			Cmd:   []string{"handlers"},
+		},
+		&container.HostConfig{
+			Binds:      []string{fmt.Sprintf("%s:/app/handlers", handlersPath)},
+			AutoRemove: true,
+		},
+		"",
+		"",
 	)
+
 	if err != nil {
 		return fmt.Errorf("failed to create plugin-builder container: %v", err)
 	}
 
-	// Start the plugin-builder container
-	if err := dockerClient.ContainerStart(context.Background(), resp.ID, container.StartOptions{}); err != nil {
+	if err = dockerClient.StartContainer(containerID); err != nil {
 		return fmt.Errorf("failed to start plugin-builder container: %v", err)
 	}
 
-	// Wait for the container to finish
-	statusCh, errCh := dockerClient.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("error waiting for plugin-builder container: %v", err)
-		}
-	case <-statusCh:
+	dockerClient.WaitForContainerToFinish(containerID)
+
+	containerPassed, err := dockerClient.ContainerPassed(containerID)
+	if err != nil {
+		return fmt.Errorf("failed to check plugin-builder exit status: %v", err)
 	}
 
-	// Check the exit code of the plugin-builder container
-	containerInspect, err := dockerClient.ContainerInspect(context.Background(), resp.ID)
-	if err != nil {
-		return fmt.Errorf("failed to inspect plugin-builder container: %v", err)
+	if !containerPassed {
+		return errors.New("plugin-builder container failed")
 	}
-	if containerInspect.State.ExitCode != 0 {
-		return fmt.Errorf("plugin-builder container exited with code %d", containerInspect.State.ExitCode)
-	}
+
+	fmt.Println("plugins compiled!")
 
 	return nil
 }
 
-func startWorkerPool(dockerClient *client.Client) error {
+func startWorkerPool(dockerClient *docker.Docker) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -224,8 +189,7 @@ func startWorkerPool(dockerClient *client.Client) error {
 		AutoRemove: true,
 	}
 
-	resp, err := dockerClient.ContainerCreate(
-		context.Background(),
+	containerID, err := dockerClient.CreateContainer(
 		&container.Config{
 			Image: workerpoolImage,
 			Cmd: []string{
@@ -235,26 +199,18 @@ func startWorkerPool(dockerClient *client.Client) error {
 			},
 		},
 		hostConfig,
-		&network.NetworkingConfig{
-			EndpointsConfig: map[string]*network.EndpointSettings{
-				dockerNetworkName: {},
-			},
-		},
-		nil,
+		dockerNetworkName,
 		"",
 	)
 	if err != nil {
-		return fmt.Errorf("error creating WorkerPool container: %v", err)
+		return fmt.Errorf("failed to create workerpool container: %v", err)
 	}
 
-	if err := dockerClient.ContainerStart(
-		context.Background(),
-		resp.ID,
-		container.StartOptions{},
-	); err != nil {
+	if err := dockerClient.StartContainer(containerID); err != nil {
 		return fmt.Errorf("error starting Redis container: %v", err)
 	}
 
 	fmt.Println("WorkerPool container started successfully")
+
 	return nil
 }
