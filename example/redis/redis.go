@@ -32,7 +32,6 @@ func main() {
 
 	results := make(chan task.Result)
 	for i := 0; i < 100; i++ {
-		fmt.Println("Pushing")
 		id, _ := gf.Push("testplugin", "Im a random sleeper")
 		go func() {
 			for {
