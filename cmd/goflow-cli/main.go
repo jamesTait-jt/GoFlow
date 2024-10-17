@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/spf13/cobra"
 )
 
@@ -110,13 +111,22 @@ func startRedis(dockerClient *client.Client) error {
 		fmt.Println("Redis container is already running")
 		return nil
 	}
-
+	portBindings := nat.PortMap{
+		"6379/tcp": []nat.PortBinding{
+			{
+				HostIP:   "0.0.0.0", // Listen on all network interfaces
+				HostPort: "6379",    // Expose on this port on the host
+			},
+		},
+	}
 	resp, err := dockerClient.ContainerCreate(
 		context.Background(),
 		&container.Config{
 			Image: "redis:latest",
 		},
-		nil,
+		&container.HostConfig{
+			PortBindings: portBindings,
+		},
 		&network.NetworkingConfig{
 			EndpointsConfig: map[string]*network.EndpointSettings{
 				dockerNetworkName: {},
