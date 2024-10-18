@@ -10,7 +10,7 @@ import (
 func Destroy() error {
 	dockerClient, err := docker.New()
 	if err != nil {
-		return fmt.Errorf("error creating Docker client: %v", err)
+		return fmt.Errorf("Error creating Docker client: %v", err)
 	}
 	defer dockerClient.Close()
 

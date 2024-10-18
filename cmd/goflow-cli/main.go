@@ -20,7 +20,7 @@ func main() {
 		Short: "Deploy workerpool with Redis broker and compiled plugins",
 		Run: func(_ *cobra.Command, args []string) {
 			if len(args) == 0 {
-				fmt.Println("handlers path is required")
+				log.Fatal("Handlers path is required")
 
 				return
 			}
@@ -44,8 +44,24 @@ func main() {
 		},
 	}
 
+	pushCmd := &cobra.Command{
+		Use:   "push",
+		Short: "Push a task to the workerpool",
+		Run: func(_ *cobra.Command, args []string) {
+			if len(args) != 2 {
+				log.Fatal("Task type and payload required")
+			}
+
+			err := run.Push(args[0], args[1])
+			if err != nil {
+				log.Fatalf("Error during push: %v", err)
+			}
+		},
+	}
+
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(destroyCmd)
+	rootCmd.AddCommand(pushCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
