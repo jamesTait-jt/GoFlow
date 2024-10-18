@@ -43,9 +43,16 @@ func (s *server) PushTask(_ context.Context, in *pb.PushTaskRequest) (*pb.PushTa
 
 func main() {
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("redis:%s", redisPort),
+		Addr: fmt.Sprintf("goflow-redis-server:%s", redisPort),
 	})
-	log.Print("connected to redis")
+	ctx := context.Background()
+	pong, err := redisClient.Ping(ctx).Result()
+
+	if err != nil {
+		log.Fatalf("could not connect to redis: %v", err)
+	}
+
+	log.Printf("redis connection successful: %s", pong)
 
 	taskSubmitter := broker.NewRedisBroker[task.Task](redisClient, "tasks")
 	resultsGetter := broker.NewRedisBroker[task.Result](redisClient, "results")
