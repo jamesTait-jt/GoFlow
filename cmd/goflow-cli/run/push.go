@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func Push(taskType string, payload any) error {
+func Push(taskType, payload string) error {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("localhost:%s", config.GoFlowHostPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -27,11 +27,11 @@ func Push(taskType string, payload any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	r, err := goFlowClient.SayHello(ctx, &pb.HelloRequest{Name: "world"})
+	r, err := goFlowClient.PushTask(ctx, &pb.PushTaskRequest{TaskType: taskType, Payload: payload})
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Fatalf("could not push: %v", err)
 	}
-	log.Printf("Greeting: %s", r.GetMessage())
+	log.Printf("Task ID: %s", r.GetId())
 
 	return nil
 }
