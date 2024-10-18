@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 
@@ -14,21 +13,22 @@ type server struct {
 	pb.GoFlowServer
 }
 
-func (s *server) PushTask(ctx context.Context, req *pb.TaskRequest) (*pb.TaskResponse, error) {
-	return &pb.TaskResponse{Message: "Hello " + req.TaskType + " " + req.Payload}, nil
+func (s *server) SayHello(_ context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	log.Printf("Received: %v", in.GetName())
+	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
 }
 
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterGoFlowServer(grpcServer, &server{})
 
-	fmt.Println("gRPC server running on port 50051...")
+	log.Printf("server listening at %v", lis.Addr())
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatalf("failed to serve: %v", err)
 	}
 }

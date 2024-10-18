@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.35.1
 // 	protoc        v3.12.4
-// source: goflow.proto
+// source: goflow/goflow.proto
 
 package goflow
 
@@ -20,31 +20,30 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// The request message containing the task type and payload.
-type TaskRequest struct {
+// The request message containing the user's name.
+type HelloRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TaskType string `protobuf:"bytes,1,opt,name=task_type,json=taskType,proto3" json:"task_type,omitempty"`
-	Payload  string `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
-func (x *TaskRequest) Reset() {
-	*x = TaskRequest{}
-	mi := &file_goflow_proto_msgTypes[0]
+func (x *HelloRequest) Reset() {
+	*x = HelloRequest{}
+	mi := &file_goflow_goflow_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TaskRequest) String() string {
+func (x *HelloRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TaskRequest) ProtoMessage() {}
+func (*HelloRequest) ProtoMessage() {}
 
-func (x *TaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_goflow_proto_msgTypes[0]
+func (x *HelloRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_goflow_goflow_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,27 +54,20 @@ func (x *TaskRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TaskRequest.ProtoReflect.Descriptor instead.
-func (*TaskRequest) Descriptor() ([]byte, []int) {
-	return file_goflow_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use HelloRequest.ProtoReflect.Descriptor instead.
+func (*HelloRequest) Descriptor() ([]byte, []int) {
+	return file_goflow_goflow_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *TaskRequest) GetTaskType() string {
+func (x *HelloRequest) GetName() string {
 	if x != nil {
-		return x.TaskType
+		return x.Name
 	}
 	return ""
 }
 
-func (x *TaskRequest) GetPayload() string {
-	if x != nil {
-		return x.Payload
-	}
-	return ""
-}
-
-// The response message acknowledging the task.
-type TaskResponse struct {
+// The response message containing the greetings
+type HelloReply struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -83,21 +75,21 @@ type TaskResponse struct {
 	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 }
 
-func (x *TaskResponse) Reset() {
-	*x = TaskResponse{}
-	mi := &file_goflow_proto_msgTypes[1]
+func (x *HelloReply) Reset() {
+	*x = HelloReply{}
+	mi := &file_goflow_goflow_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TaskResponse) String() string {
+func (x *HelloReply) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TaskResponse) ProtoMessage() {}
+func (*HelloReply) ProtoMessage() {}
 
-func (x *TaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_goflow_proto_msgTypes[1]
+func (x *HelloReply) ProtoReflect() protoreflect.Message {
+	mi := &file_goflow_goflow_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -108,60 +100,58 @@ func (x *TaskResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TaskResponse.ProtoReflect.Descriptor instead.
-func (*TaskResponse) Descriptor() ([]byte, []int) {
-	return file_goflow_proto_rawDescGZIP(), []int{1}
+// Deprecated: Use HelloReply.ProtoReflect.Descriptor instead.
+func (*HelloReply) Descriptor() ([]byte, []int) {
+	return file_goflow_goflow_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TaskResponse) GetMessage() string {
+func (x *HelloReply) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-var File_goflow_proto protoreflect.FileDescriptor
+var File_goflow_goflow_proto protoreflect.FileDescriptor
 
-var file_goflow_proto_rawDesc = []byte{
-	0x0a, 0x0c, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06,
-	0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x22, 0x44, 0x0a, 0x0b, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x74, 0x61, 0x73, 0x6b, 0x5f, 0x74, 0x79,
-	0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x74, 0x61, 0x73, 0x6b, 0x54, 0x79,
-	0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x28, 0x0a, 0x0c,
-	0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07,
-	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d,
-	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x32, 0x41, 0x0a, 0x06, 0x47, 0x6f, 0x46, 0x6c, 0x6f, 0x77,
-	0x12, 0x37, 0x0a, 0x08, 0x50, 0x75, 0x73, 0x68, 0x54, 0x61, 0x73, 0x6b, 0x12, 0x13, 0x2e, 0x67,
-	0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x14, 0x2e, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e, 0x54, 0x61, 0x73, 0x6b, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x32, 0x5a, 0x30, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x61, 0x6d, 0x65, 0x73, 0x54, 0x61, 0x69,
-	0x74, 0x2d, 0x6a, 0x74, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2f, 0x63, 0x6d, 0x64, 0x2f,
-	0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_goflow_goflow_proto_rawDesc = []byte{
+	0x0a, 0x13, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x22, 0x22, 0x0a,
+	0x0c, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a,
+	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
+	0x65, 0x22, 0x26, 0x0a, 0x0a, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12,
+	0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x32, 0x40, 0x0a, 0x06, 0x47, 0x6f, 0x46,
+	0x6c, 0x6f, 0x77, 0x12, 0x36, 0x0a, 0x08, 0x53, 0x61, 0x79, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x12,
+	0x14, 0x2e, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x12, 0x2e, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2e, 0x48,
+	0x65, 0x6c, 0x6c, 0x6f, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x22, 0x00, 0x42, 0x32, 0x5a, 0x30, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6a, 0x61, 0x6d, 0x65, 0x73, 0x54,
+	0x61, 0x69, 0x74, 0x2d, 0x6a, 0x74, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2f, 0x63, 0x6d,
+	0x64, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x2f, 0x67, 0x6f, 0x66, 0x6c, 0x6f, 0x77, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_goflow_proto_rawDescOnce sync.Once
-	file_goflow_proto_rawDescData = file_goflow_proto_rawDesc
+	file_goflow_goflow_proto_rawDescOnce sync.Once
+	file_goflow_goflow_proto_rawDescData = file_goflow_goflow_proto_rawDesc
 )
 
-func file_goflow_proto_rawDescGZIP() []byte {
-	file_goflow_proto_rawDescOnce.Do(func() {
-		file_goflow_proto_rawDescData = protoimpl.X.CompressGZIP(file_goflow_proto_rawDescData)
+func file_goflow_goflow_proto_rawDescGZIP() []byte {
+	file_goflow_goflow_proto_rawDescOnce.Do(func() {
+		file_goflow_goflow_proto_rawDescData = protoimpl.X.CompressGZIP(file_goflow_goflow_proto_rawDescData)
 	})
-	return file_goflow_proto_rawDescData
+	return file_goflow_goflow_proto_rawDescData
 }
 
-var file_goflow_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_goflow_proto_goTypes = []any{
-	(*TaskRequest)(nil),  // 0: goflow.TaskRequest
-	(*TaskResponse)(nil), // 1: goflow.TaskResponse
+var file_goflow_goflow_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_goflow_goflow_proto_goTypes = []any{
+	(*HelloRequest)(nil), // 0: goflow.HelloRequest
+	(*HelloReply)(nil),   // 1: goflow.HelloReply
 }
-var file_goflow_proto_depIdxs = []int32{
-	0, // 0: goflow.GoFlow.PushTask:input_type -> goflow.TaskRequest
-	1, // 1: goflow.GoFlow.PushTask:output_type -> goflow.TaskResponse
+var file_goflow_goflow_proto_depIdxs = []int32{
+	0, // 0: goflow.GoFlow.SayHello:input_type -> goflow.HelloRequest
+	1, // 1: goflow.GoFlow.SayHello:output_type -> goflow.HelloReply
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -169,27 +159,27 @@ var file_goflow_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_goflow_proto_init() }
-func file_goflow_proto_init() {
-	if File_goflow_proto != nil {
+func init() { file_goflow_goflow_proto_init() }
+func file_goflow_goflow_proto_init() {
+	if File_goflow_goflow_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_goflow_proto_rawDesc,
+			RawDescriptor: file_goflow_goflow_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_goflow_proto_goTypes,
-		DependencyIndexes: file_goflow_proto_depIdxs,
-		MessageInfos:      file_goflow_proto_msgTypes,
+		GoTypes:           file_goflow_goflow_proto_goTypes,
+		DependencyIndexes: file_goflow_goflow_proto_depIdxs,
+		MessageInfos:      file_goflow_goflow_proto_msgTypes,
 	}.Build()
-	File_goflow_proto = out.File
-	file_goflow_proto_rawDesc = nil
-	file_goflow_proto_goTypes = nil
-	file_goflow_proto_depIdxs = nil
+	File_goflow_goflow_proto = out.File
+	file_goflow_goflow_proto_rawDesc = nil
+	file_goflow_goflow_proto_goTypes = nil
+	file_goflow_goflow_proto_depIdxs = nil
 }
