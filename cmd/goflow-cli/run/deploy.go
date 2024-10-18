@@ -61,8 +61,8 @@ func startGoflowService(dockerClient *docker.Docker) error {
 			PortBindings: nat.PortMap{
 				"50051/tcp": []nat.PortBinding{
 					{
-						HostIP:   "0.0.0.0", // Listen on all network interfaces
-						HostPort: "50021",   // Expose on this port on the host
+						HostIP:   "0.0.0.0",
+						HostPort: config.GoFlowHostPort,
 					},
 				},
 			},

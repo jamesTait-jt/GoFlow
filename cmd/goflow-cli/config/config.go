@@ -1,5 +1,7 @@
 package config
 
+var GoFlowHostPort = "50021"
+
 var DockerNetworkID = "goflow-network"
 
 var GoflowImage = "goflow"
