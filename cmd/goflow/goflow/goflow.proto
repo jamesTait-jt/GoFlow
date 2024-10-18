@@ -7,6 +7,7 @@ package goflow;
 service GoFlow {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc PushTask (PushTaskRequest) returns (PushTaskReply) {}
+  rpc GetResult (GetResultRequest) returns (GetResultReply) {}
 }
 
 message HelloRequest {
@@ -24,4 +25,12 @@ message PushTaskRequest {
 
 message PushTaskReply {
   string id = 1;
+}
+
+message GetResultRequest {
+  string taskID = 1;
+}
+
+message GetResultReply {
+  string result = 1;
 }

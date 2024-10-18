@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -41,6 +42,22 @@ func (s *server) PushTask(_ context.Context, in *pb.PushTaskRequest) (*pb.PushTa
 	return &pb.PushTaskReply{Id: id}, nil
 }
 
+func (s *server) GetResult(_ context.Context, in *pb.GetResultRequest) (*pb.GetResultReply, error) {
+	log.Printf("Received get result: [%s]", in.GetTaskID())
+
+	result, ok := s.gf.GetResult(in.GetTaskID())
+	if !ok {
+		return nil, fmt.Errorf("task not complete or didnt exist")
+	}
+
+	parsedResult, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %v", result)
+	}
+
+	return &pb.GetResultReply{Result: string(parsedResult)}, nil
+}
+
 func main() {
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("goflow-redis-server:%s", redisPort),
@@ -75,6 +92,7 @@ func main() {
 	pb.RegisterGoFlowServer(grpcServer, &server{gf: gf})
 
 	log.Printf("server listening at %v", lis.Addr())
+	
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

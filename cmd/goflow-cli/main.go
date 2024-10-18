@@ -59,9 +59,25 @@ func main() {
 		},
 	}
 
+	getCmd := &cobra.Command{
+		Use:   "get",
+		Short: "get the result of a task execution",
+		Run: func(_ *cobra.Command, args []string) {
+			if len(args) != 1 {
+				log.Fatal("task id required")
+			}
+
+			err := run.Get(args[0])
+			if err != nil {
+				log.Fatalf("Error during get: %v", err)
+			}
+		},
+	}
+
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(destroyCmd)
 	rootCmd.AddCommand(pushCmd)
+	rootCmd.AddCommand(getCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
