@@ -6,7 +6,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/jamesTait-jt/goflow/cmd/goflow/pb"
+	pb "github.com/jamesTait-jt/goflow/cmd/goflow/goflow"
 	"google.golang.org/grpc"
 )
 
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterGoFlowServer(grpcServer, &server{}) // Register the service
+	pb.RegisterGoFlowServer(grpcServer, &server{})
 
 	fmt.Println("gRPC server running on port 50051...")
 	if err := grpcServer.Serve(lis); err != nil {

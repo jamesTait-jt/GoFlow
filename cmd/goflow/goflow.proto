@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/jamesTait-jt/goflow/cmd/goflow/pb";
+option go_package = "github.com/jamesTait-jt/goflow/cmd/goflow/goflow";
 
 package goflow;
 

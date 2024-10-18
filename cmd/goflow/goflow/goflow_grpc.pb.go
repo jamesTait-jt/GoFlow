@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.12.4
-// source: pb/goflow.proto
+// source: goflow.proto
 
-package pb
+package goflow
 
 import (
 	context "context"
@@ -123,5 +123,5 @@ var GoFlow_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pb/goflow.proto",
+	Metadata: "goflow.proto",
 }
