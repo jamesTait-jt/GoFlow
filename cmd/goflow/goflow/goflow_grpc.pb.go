@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.12.4
-// source: goflow/goflow.proto
+// source: cmd/goflow/goflow/goflow.proto
 
 package goflow
 
@@ -20,16 +20,15 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	GoFlow_SayHello_FullMethodName = "/goflow.GoFlow/SayHello"
+	GoFlow_PushTask_FullMethodName = "/goflow.GoFlow/PushTask"
 )
 
 // GoFlowClient is the client API for GoFlow service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// The greeting service definition.
 type GoFlowClient interface {
-	// Sends a greeting
 	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
+	PushTask(ctx context.Context, in *PushTaskRequest, opts ...grpc.CallOption) (*PushTaskReply, error)
 }
 
 type goFlowClient struct {
@@ -50,14 +49,22 @@ func (c *goFlowClient) SayHello(ctx context.Context, in *HelloRequest, opts ...g
 	return out, nil
 }
 
+func (c *goFlowClient) PushTask(ctx context.Context, in *PushTaskRequest, opts ...grpc.CallOption) (*PushTaskReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PushTaskReply)
+	err := c.cc.Invoke(ctx, GoFlow_PushTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoFlowServer is the server API for GoFlow service.
 // All implementations must embed UnimplementedGoFlowServer
 // for forward compatibility.
-//
-// The greeting service definition.
 type GoFlowServer interface {
-	// Sends a greeting
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
+	PushTask(context.Context, *PushTaskRequest) (*PushTaskReply, error)
 	mustEmbedUnimplementedGoFlowServer()
 }
 
@@ -70,6 +77,9 @@ type UnimplementedGoFlowServer struct{}
 
 func (UnimplementedGoFlowServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
+}
+func (UnimplementedGoFlowServer) PushTask(context.Context, *PushTaskRequest) (*PushTaskReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PushTask not implemented")
 }
 func (UnimplementedGoFlowServer) mustEmbedUnimplementedGoFlowServer() {}
 func (UnimplementedGoFlowServer) testEmbeddedByValue()                {}
@@ -110,6 +120,24 @@ func _GoFlow_SayHello_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoFlow_PushTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PushTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoFlowServer).PushTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoFlow_PushTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoFlowServer).PushTask(ctx, req.(*PushTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoFlow_ServiceDesc is the grpc.ServiceDesc for GoFlow service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -121,7 +149,11 @@ var GoFlow_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "SayHello",
 			Handler:    _GoFlow_SayHello_Handler,
 		},
+		{
+			MethodName: "PushTask",
+			Handler:    _GoFlow_PushTask_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "goflow/goflow.proto",
+	Metadata: "cmd/goflow/goflow/goflow.proto",
 }
